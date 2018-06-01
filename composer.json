@@ -1,0 +1,34 @@
+{
+    "name": "buzzingpixel/visor-ee",
+    "version": "0.0.1",
+    "description": "Custom entries view",
+    "type": "ee-add-on",
+    "authors": [
+        {
+            "name": "TJ Draper",
+            "email": "tj@buzzingpixel.com",
+            "homepage": "https://buzzingpixel.com"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:tjdraper/expressionengine.git"
+        }
+    ],
+    "require": {
+    },
+    "require-dev": {
+        "tjdraper/expressionengine": "^4.2.1",
+        "roave/security-advisories": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "buzzingpixel\\visor\\": "src/visor"
+        }
+    },
+    "extra": {
+        "handle": "visor",
+        "systemPath": "src/visor"
+    }
+}
