@@ -17,6 +17,8 @@ if (file_exists($vendorAutoloadFile)) {
     require $vendorAutoloadFile;
 }
 
+defined('VISOR_VER') || define('VISOR_VER', '0.0.1');
+
 return [
     'author' => 'TJ Draper',
     'author_url' => 'https://buzzingpixel.com',
@@ -24,7 +26,7 @@ return [
     'name' => 'Visor',
     'namespace' => 'buzzingpixel\visor',
     'settings_exist' => false,
-    'version' => '0.0.1',
+    'version' => VISOR_VER,
     'services' => [
     ],
 ];
