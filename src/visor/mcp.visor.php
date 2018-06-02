@@ -31,6 +31,46 @@ class Visor_mcp
     /** @var URLFactory $cpUrlService */
     private $cpUrlFactory;
 
+    private static $defaultColumns = [
+        [
+            'label' => 'id',
+            'encode' => false,
+            'sort' => false,
+            'type' => Table::COL_ID,
+            'modelProperty' => 'entry_id',
+        ],
+        [
+            'label' => 'title',
+            'encode' => false,
+            'sort' => false,
+            'type' => Table::COL_TEXT,
+            'modelProperty' => 'title',
+            'propertyFormatting' => 'title',
+        ],
+        [
+            'label' => 'channel',
+            'encode' => false,
+            'sort' => false,
+            'type' => Table::COL_TEXT,
+            'modelProperty' => 'Channel.channel_title',
+        ],
+        [
+            'label' => 'date',
+            'encode' => false,
+            'sort' => false,
+            'type' => Table::COL_TEXT,
+            'modelProperty' => 'entry_date',
+            'propertyFormatting' => 'date',
+        ],
+        [
+            'label' => 'status',
+            'encode' => false,
+            'sort' => false,
+            'type' => Table::COL_STATUS,
+            'modelProperty' => 'status',
+        ],
+    ];
+
     /**
      * Visor_mcp constructor
      */
@@ -90,41 +130,11 @@ class Visor_mcp
 
         $table->setNoResultsText('noEntries');
 
-        $table->setColumns([
-            [
-                'label' => 'id',
-                'encode' => false,
-                'sort' => false,
-                'type' => Table::COL_ID,
-            ],
-            [
-                'label' => 'title',
-                'encode' => false,
-                'sort' => false,
-                'type' => Table::COL_TEXT,
-            ],
-            [
-                'label' => 'channel',
-                'encode' => false,
-                'sort' => false,
-                'type' => Table::COL_TEXT,
-            ],
-            [
-                'label' => 'date',
-                'encode' => false,
-                'sort' => false,
-                'type' => Table::COL_TEXT,
-            ],
-            [
-                'label' => 'status',
-                'encode' => false,
-                'sort' => false,
-                'type' => Table::COL_STATUS,
-            ],
+        $table->setColumns(array_merge(self::$defaultColumns, [
             [
                 'type' => Table::COL_CHECKBOX,
             ],
-        ]);
+        ]));
 
         return $table;
     }
@@ -150,22 +160,73 @@ class Visor_mcp
                 )
                 ->compile();
 
-            $entryDateTime = new \DateTime();
-            $entryDateTime->setTimestamp($channelModel->getProperty('entry_date'));
+            $data = [];
 
-            $tableData[] = [
-                $channelModel->getProperty('entry_id'),
-                '<strong style="font-style: normal;">' .
-                    "<a href=\"{$url}\">{$channelModel->getProperty('title')}</a>" .
-                '</strong>',
-                $channelModel->Channel->getProperty('channel_title'),
-                $entryDateTime->format('n/j/Y g:i A'),
-                $channelModel->getProperty('status'),
-                [
-                    'name' => "entry[{$channelModel->getProperty('entry_id')}]",
-                    'value' => 'selected',
-                ]
-            ];
+            foreach (self::$defaultColumns as $column) {
+                $property = isset($column['modelProperty']) ?
+                    $column['modelProperty'] :
+                    null;
+
+                $parentCheck = explode('.', $property);
+                $parentProperty = null;
+
+                if (isset($parentCheck[1])) {
+                    $parentProperty = $parentCheck[0];
+                    $property = $parentCheck[1];
+                }
+
+                if ((
+                        $parentProperty &&
+                        ! $channelModel->{$parentProperty}->hasProperty($property)
+                    ) ||
+                    (
+                        ! $parentProperty &&
+                        ! $channelModel->hasProperty($property)
+                    )
+                ) {
+                    $data[] = '';
+                    continue;
+                }
+
+                $formatting = isset($column['propertyFormatting']) ?
+                    $column['propertyFormatting'] :
+                    null;
+
+                $propertyValue = null;
+
+                if ($parentProperty) {
+                    $propertyValue = $channelModel->{$parentProperty}->getProperty($property);
+                }
+
+                if (! $parentProperty) {
+                    $propertyValue = $channelModel->getProperty($property);
+                }
+
+                switch ($formatting) {
+                    case 'date':
+                        $format = isset($column['dateFormat']) ?
+                            $column['dateFormat'] :
+                            'n/j/Y g:i A';
+
+                        $dateTime = new \DateTime();
+                        $dateTime->setTimestamp($propertyValue);
+
+                        $data[] = $dateTime->format($format);
+                        break;
+                    case 'title':
+                        $data[] = '<strong style="font-style: normal;">' .
+                            "<a href=\"{$url}\">{$propertyValue}</a>" .
+                        '</strong>';
+                        break;
+                    default:
+                        $data[] = $propertyValue;
+                }
+            }
+
+            $tableData[] = array_merge($data, [[
+                'name' => "entry[{$channelModel->getProperty('entry_id')}]",
+                'value' => 'selected',
+            ]]);
         }
 
         $table->setData($tableData);
