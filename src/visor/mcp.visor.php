@@ -10,6 +10,7 @@ use EllisLab\ExpressionEngine\Library\CP\Table;
 use EllisLab\ExpressionEngine\Service\URL\URLFactory;
 use EllisLab\ExpressionEngine\Service\View\ViewFactory;
 use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
+use EllisLab\ExpressionEngine\Service\Model\Collection as ModelCollection;
 use EllisLab\ExpressionEngine\Model\Channel\ChannelEntry as ChannelEntryModel;
 use EllisLab\ExpressionEngine\Service\Model\Query\Builder as ModelQueryBuilder;
 
@@ -47,6 +48,27 @@ class Visor_mcp
      */
     public function index()
     {
+        return [
+            'heading' => lang('Visor'),
+            'body' => $this->viewFactory->make('visor:Visor')
+                ->render([
+                    'viewFactory' => $this->viewFactory,
+                    'tableViewData' => $this
+                        ->populateTableData(
+                            $this->createTable(),
+                            $this->getEntryModelCollection()
+                        )
+                        ->viewData(),
+                ])
+        ];
+    }
+
+    /**
+     * Gets channel collection
+     * @return ModelCollection
+     */
+    private function getEntryModelCollection()
+    {
         $limit = $this->inputService->get('limit', 25);
 
         /** @var ModelQueryBuilder $channelModelBuilder */
@@ -54,8 +76,15 @@ class Visor_mcp
         $channelModelBuilder->order('entry_date', 'desc');
         $channelModelBuilder->limit($limit);
 
-        $channelCollection = $channelModelBuilder->all();
+        return $channelModelBuilder->all();
+    }
 
+    /**
+     * Creates the table
+     * @return Table
+     */
+    private function createTable()
+    {
         /** @var Table $table */
         $table = ee('CP/Table');
 
@@ -97,9 +126,22 @@ class Visor_mcp
             ],
         ]);
 
+        return $table;
+    }
+
+    /**
+     * Populates the table data
+     * @param Table $table
+     * @param ModelCollection $entryModelCollection
+     * @return Table
+     */
+    private function populateTableData(
+        Table $table,
+        ModelCollection $entryModelCollection
+    ) {
         $tableData = [];
 
-        foreach ($channelCollection as $channelModel) {
+        foreach ($entryModelCollection as $channelModel) {
             /** @var ChannelEntryModel $channelModel */
 
             $url = $this->cpUrlFactory
@@ -113,7 +155,9 @@ class Visor_mcp
 
             $tableData[] = [
                 $channelModel->getProperty('entry_id'),
-                "<strong style=\"font-style: normal;\"><a href=\"{$url}\">{$channelModel->getProperty('title')}</a></strong>",
+                '<strong style="font-style: normal;">' .
+                    "<a href=\"{$url}\">{$channelModel->getProperty('title')}</a>" .
+                '</strong>',
                 $channelModel->Channel->getProperty('channel_title'),
                 $entryDateTime->format('n/j/Y g:i A'),
                 $channelModel->getProperty('status'),
@@ -126,13 +170,6 @@ class Visor_mcp
 
         $table->setData($tableData);
 
-        return [
-            'heading' => lang('Visor'),
-            'body' => $this->viewFactory->make('visor:Visor')
-                ->render([
-                    'viewFactory' => $this->viewFactory,
-                    'tableViewData' => $table->viewData(),
-                ])
-        ];
+        return $table;
     }
 }
