@@ -110,11 +110,23 @@ class Visor_mcp
     private function getEntryModelCollection()
     {
         $limit = $this->inputService->get('limit', 25);
+        $channelsInput = (array) $this->inputService->get('channels');
+
+        $channels  = [];
+
+        foreach ($channelsInput as $channel) {
+            $channels[$channel] = $channel;
+        }
 
         /** @var ModelQueryBuilder $channelModelBuilder */
         $channelModelBuilder = $this->modelFacade->get('ChannelEntry');
         $channelModelBuilder->order('entry_date', 'desc');
         $channelModelBuilder->limit($limit);
+
+        if ($channels) {
+            $channelModelBuilder->with('Channel');
+            $channelModelBuilder->filter('Channel.channel_name', 'IN', $channels);
+        }
 
         return $channelModelBuilder->all();
     }
