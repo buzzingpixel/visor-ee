@@ -7,4 +7,10 @@
  */
 
 // @codingStandardsIgnoreStart
-$lang = [];
+$lang = [
+    'title' => 'Title',
+    'channel' => 'Channel',
+    'date' => 'Date',
+    'status' => 'Status',
+    'noEntries' => 'No entries were found',
+];

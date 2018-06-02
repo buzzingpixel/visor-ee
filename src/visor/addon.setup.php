@@ -25,7 +25,7 @@ return [
     'description' => '',
     'name' => 'Visor',
     'namespace' => 'buzzingpixel\visor',
-    'settings_exist' => false,
+    'settings_exist' => true,
     'version' => VISOR_VER,
     'services' => [
     ],
