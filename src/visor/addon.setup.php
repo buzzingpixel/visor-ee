@@ -18,6 +18,7 @@ if (file_exists($vendorAutoloadFile)) {
 }
 
 defined('VISOR_VER') || define('VISOR_VER', '0.0.1');
+defined('VISOR_PATH') || define('VISOR_PATH', $addOnPath);
 
 return [
     'author' => 'TJ Draper',

@@ -10,6 +10,7 @@ use EllisLab\ExpressionEngine\Library\CP\Table;
 use EllisLab\ExpressionEngine\Service\URL\URLFactory;
 use EllisLab\ExpressionEngine\Service\View\ViewFactory;
 use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
+use EllisLab\ExpressionEngine\Model\Channel\Channel as ChannelModel;
 use EllisLab\ExpressionEngine\Service\Model\Collection as ModelCollection;
 use EllisLab\ExpressionEngine\Model\Channel\ChannelEntry as ChannelEntryModel;
 use EllisLab\ExpressionEngine\Service\Model\Query\Builder as ModelQueryBuilder;
@@ -88,18 +89,34 @@ class Visor_mcp
      */
     public function index()
     {
+        $filters = $this->inputService->get('filter', true);
+
+        if (! is_array($filters)) {
+            $filters = [];
+        }
+
+        $viewBody = '<style type="text/css">';
+        $viewBody .= file_get_contents(VISOR_PATH . '/resources/visor.css');
+        $viewBody .= '</style>';
+
+        $viewBody .= $this->viewFactory->make('visor:Visor')
+            ->render([
+                'viewFactory' => $this->viewFactory,
+                'baseUrl' => $this->cpUrlFactory->make('addons/settings/visor')
+                    ->compile(),
+                'filters' => $filters,
+                'channelSelects' => $this->getChannelSelects(),
+                'tableViewData' => $this
+                    ->populateTableData(
+                        $this->createTable(),
+                        $this->getEntryModelCollection()
+                    )
+                    ->viewData(),
+            ]);
+
         return [
             'heading' => lang('Visor'),
-            'body' => $this->viewFactory->make('visor:Visor')
-                ->render([
-                    'viewFactory' => $this->viewFactory,
-                    'tableViewData' => $this
-                        ->populateTableData(
-                            $this->createTable(),
-                            $this->getEntryModelCollection()
-                        )
-                        ->viewData(),
-                ])
+            'body' => $viewBody,
         ];
     }
 
@@ -244,5 +261,28 @@ class Visor_mcp
         $table->setData($tableData);
 
         return $table;
+    }
+
+    /**
+     * Gets channels selects array
+     * @return array
+     */
+    private function getChannelSelects()
+    {
+        /** @var ModelQueryBuilder $channelQuery */
+        $channelQuery = $this->modelFacade->get('Channel');
+
+        $channelQuery->order('channel_title', 'asc');
+
+        $channelSelects = [
+            '' => '--',
+        ];
+
+        foreach ($channelQuery->all() as $model) {
+            /** @var ChannelModel $model */
+            $channelSelects[$model->getProperty('channel_name')] = $model->getProperty('channel_title');
+        }
+
+        return $channelSelects;
     }
 }
