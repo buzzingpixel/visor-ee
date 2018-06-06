@@ -112,6 +112,7 @@ class Visor_mcp
                     ->compile(),
                 'filters' => $filters,
                 'channelSelects' => $this->getChannelSelects(),
+                'filteredChannelLinks' => $this->getFilteredChannelLinks(),
                 'tableViewData' => $this
                     ->populateTableData(
                         $this->createTable(),
@@ -185,6 +186,39 @@ class Visor_mcp
         $channels = array_values($channels);
 
         return compact('channels', 'standard');
+    }
+
+    /**
+     * Gets filtered channel links
+     * @return array
+     */
+    private function getFilteredChannelLinks()
+    {
+        $channelQuery = $this->modelFacade->get('Channel');
+
+        $channelQuery->order('channel_title', 'asc');
+
+        $filters = $this->getFiltersFromInput();
+
+        if ($filters['channels']) {
+            $channelQuery->filter('channel_name', 'IN', $filters['channels']);
+        }
+
+        $channels = $channelQuery->all();
+
+        $links = [];
+
+        foreach ($channels as $channel) {
+            /** @var ChannelModel $channel */
+            $links[] = [
+                'title' => $channel->getProperty('channel_title'),
+                'link' => $this->cpUrlFactory
+                    ->make("publish/create/{$channel->getProperty('channel_id')}")
+                    ->compile()
+            ];
+        }
+
+        return $links;
     }
 
     /**

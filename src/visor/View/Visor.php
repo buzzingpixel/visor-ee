@@ -5,6 +5,7 @@
 /** @var string $baseUrl */
 /** @var array $filters */
 /** @var array $channelSelects */
+/** @var array $filteredChannelLinks */
 
 $filterTypes = [
     '' => '--',
@@ -22,21 +23,31 @@ $filterTypes = [
         <form action="<?=$baseUrl?>" class="JSVisorFilterForm">
             <input type="hidden" name="/cp/addons/settings/visor" value="">
             <div class="section-header__controls">
-                <!-- <a class="btn action" href="#todo">New in Test Channel 1</a> -->
-                <!-- <div class="filter-item filter-item--right">
-                    <a
-                        href="#"
-                        class="js-filter-link filter-item__link filter-item__link--has-submenu filter-item__link--action"
-                    >
-                        New Entry
-                    </a>
-                    <div class="filter-submenu">
-                        <div class="filter-submenu__scroll">
-                            <a href="admin.php?/cp/publish/create/1" class="filter-submenu__link">Test Channel 1</a>
-                            <a href="admin.php?/cp/publish/create/1" class="filter-submenu__link">Test Channel 2</a>
+                <?php if (count($filteredChannelLinks) < 2) : ?>
+                    <?php foreach ($filteredChannelLinks as $link) : ?>
+                        <a class="btn action" href="<?=$link['link']?>">
+                            New In <?=$link['title']?>
+                        </a>
+                    <?php endforeach; ?>
+                <?php else : ?>
+                    <div class="filter-item filter-item--right">
+                        <a
+                            href="#"
+                            class="js-filter-link filter-item__link filter-item__link--has-submenu filter-item__link--action"
+                        >
+                            New Entry
+                        </a>
+                        <div class="filter-submenu">
+                            <div class="filter-submenu__scroll">
+                                <?php foreach ($filteredChannelLinks as $link) : ?>
+                                    <a href="<?=$link['link']?>" class="filter-submenu__link">
+                                        <?=$link['title']?>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                     </div>
-                </div> -->
+                <?php endif; ?>
             </div>
             <div class="filters">
                 <ul class="JSFilterList">
