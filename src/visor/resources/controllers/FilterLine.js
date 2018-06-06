@@ -35,6 +35,15 @@ function runFilterLine(F) {
             'change .JSFilterType': function(e) {
                 this.filterTypeRespond(e.currentTarget.value);
             },
+            'change .JSOperator': function() {
+                this.$el.find('.JSPendingWrapper').addClass('filters__pending-wrapper');
+            },
+            'change .JSChannelFilterValues': function() {
+                this.$el.find('.JSPendingWrapper').addClass('filters__pending-wrapper');
+            },
+            'change .JSOtherFilterValues': function() {
+                this.$el.find('.JSPendingWrapper').addClass('filters__pending-wrapper');
+            },
             'click .JSRemoveFilter': function(e) {
                 e.preventDefault();
                 this.removeFilter($(e.currentTarget));
@@ -43,6 +52,8 @@ function runFilterLine(F) {
 
         filterTypeRespond: function(val) {
             let self = this;
+
+            self.$el.find('.JSPendingWrapper').addClass('filters__pending-wrapper');
 
             if (! val) {
                 self.$operator.hide();

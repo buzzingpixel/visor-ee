@@ -53,84 +53,86 @@ $filterTypes = [
                 <ul class="JSFilterList">
                     <?php foreach ($filters as $key => $filter) : ?>
                         <li class="JSFilterListItem" data-is-new="false">
-                            <div class="filters__item-wrapper">
-                                <select name="filter[<?=$key?>][type]" class="JSFilterType">
-                                    <?php foreach ($filterTypes as $filterValue => $filterText) : ?>
+                            <div class="JSPendingWrapper">
+                                <div class="filters__item-wrapper">
+                                    <select name="filter[<?=$key?>][type]" class="JSFilterType">
+                                        <?php foreach ($filterTypes as $filterValue => $filterText) : ?>
+                                            <option
+                                                value="<?=$filterValue?>"
+                                                <?php if ($filter['type'] === $filterValue) : ?>
+                                                selected
+                                                <?php endif ?>
+                                            >
+                                                <?=$filterText?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="filters__item-wrapper">
+                                    <select name="filter[<?=$key?>][operator]" class="JSOperator">
                                         <option
-                                            value="<?=$filterValue?>"
-                                            <?php if ($filter['type'] === $filterValue) : ?>
+                                            value="is"
+                                            class="JSOperatorIs"
+                                            <?php if ($filter['operator'] === 'is') : ?>
                                             selected
-                                            <?php endif ?>
+                                            <?php endif; ?>
                                         >
-                                            <?=$filterText?>
+                                            is
                                         </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="filters__item-wrapper">
-                                <select name="filter[<?=$key?>][operator]" class="JSOperator">
-                                    <option
-                                        value="is"
-                                        class="JSOperatorIs"
-                                        <?php if ($filter['operator'] === 'is') : ?>
-                                        selected
-                                        <?php endif; ?>
-                                    >
-                                        is
-                                    </option>
-                                    <option
-                                        value="contains"
-                                        class="JSOperatorContains"
-                                        <?php if ($filter['operator'] === 'contains') : ?>
-                                        selected
-                                        <?php endif; ?>
+                                        <option
+                                            value="contains"
+                                            class="JSOperatorContains"
+                                            <?php if ($filter['operator'] === 'contains') : ?>
+                                            selected
+                                            <?php endif; ?>
+                                            <?php if ($filter['type'] === 'channel') : ?>
+                                            disabled
+                                            <?php endif; ?>
+                                        >
+                                            contains
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="filters__item-wrapper">
+                                    <select
                                         <?php if ($filter['type'] === 'channel') : ?>
-                                        disabled
+                                        name="filter[<?=$key?>][value]"
+                                        <?php endif; ?>
+                                        data-name="filter[<?=$key?>][value]"
+                                        class="JSChannelFilterValues"
+                                        <?php if ($filter['type'] !== 'channel') : ?>
+                                        style="display: none;"
                                         <?php endif; ?>
                                     >
-                                        contains
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="filters__item-wrapper">
-                                <select
-                                    <?php if ($filter['type'] === 'channel') : ?>
-                                    name="filter[<?=$key?>][value]"
-                                    <?php endif; ?>
-                                    data-name="filter[<?=$key?>][value]"
-                                    class="JSChannelFilterValues"
-                                    <?php if ($filter['type'] !== 'channel') : ?>
-                                    style="display: none;"
-                                    <?php endif; ?>
-                                >
-                                    <?php foreach ($channelSelects as $channelName => $channelTitle) : ?>
-                                        <option
-                                            value="<?=$channelName?>"
-                                            <?php if ($filter['value'] === $channelName) : ?>
-                                            selected
-                                            <?php endif ?>
-                                        >
-                                            <?=$channelTitle?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <input
-                                    type="text"
-                                    <?php if ($filter['type'] !== 'channel') : ?>
-                                    name="filter[<?=$key?>][value]"
-                                    <?php endif; ?>
-                                    <?php if ($filter['type'] !== 'channel') : ?>
-                                    value="<?=$filter['value']?>"
-                                    <?php endif; ?>
-                                    data-name="filter[<?=$key?>][value]"
-                                    class="JSOtherFilterValues"
-                                    <?php if ($filter['type'] === 'channel') : ?>
-                                    style="display: none;"
-                                    <?php endif; ?>
-                                >
-                            </div>
-                            <div class="filters__item-wrapper">
-                                <a href="#" class="filters__remove-filter JSRemoveFilter">x</a>
+                                        <?php foreach ($channelSelects as $channelName => $channelTitle) : ?>
+                                            <option
+                                                value="<?=$channelName?>"
+                                                <?php if ($filter['value'] === $channelName) : ?>
+                                                selected
+                                                <?php endif ?>
+                                            >
+                                                <?=$channelTitle?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <input
+                                        type="text"
+                                        <?php if ($filter['type'] !== 'channel') : ?>
+                                        name="filter[<?=$key?>][value]"
+                                        <?php endif; ?>
+                                        <?php if ($filter['type'] !== 'channel') : ?>
+                                        value="<?=$filter['value']?>"
+                                        <?php endif; ?>
+                                        data-name="filter[<?=$key?>][value]"
+                                        class="JSOtherFilterValues"
+                                        <?php if ($filter['type'] === 'channel') : ?>
+                                        style="display: none;"
+                                        <?php endif; ?>
+                                    >
+                                </div>
+                                <div class="filters__item-wrapper">
+                                    <a href="#" class="filters__remove-filter JSRemoveFilter">x</a>
+                                </div>
                             </div>
                         </li>
                     <?php endforeach ?>
