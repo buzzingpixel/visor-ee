@@ -98,6 +98,12 @@ class Visor_mcp
         $viewBody = '<style type="text/css">';
         $viewBody .= file_get_contents(VISOR_PATH . '/resources/visor.css');
         $viewBody .= '</style>';
+        $viewBody .= '<script type="text/javascript">';
+        $viewBody .= file_get_contents(VISOR_PATH . '/resources/FAB.controller.js');
+        $viewBody .= '</script>';
+        $viewBody .= '<script type="text/javascript">';
+        $viewBody .= file_get_contents(VISOR_PATH . '/resources/FAB.model.js');
+        $viewBody .= '</script>';
 
         $viewBody .= $this->viewFactory->make('visor:Visor')
             ->render([
@@ -113,6 +119,29 @@ class Visor_mcp
                     )
                     ->viewData(),
             ]);
+
+        $controllersDirectory = new \DirectoryIterator(
+            VISOR_PATH . '/resources/controllers'
+        );
+
+        foreach ($controllersDirectory as $fileInfo) {
+            if ($fileInfo->isDot() ||
+                $fileInfo->isDir() ||
+                $fileInfo->getExtension() !== 'js'
+            ) {
+                continue;
+            }
+
+            $viewBody .= '<script type="text/javascript">';
+            $viewBody .= file_get_contents(
+                $fileInfo->getPath() . '/' . $fileInfo->getFilename()
+            );
+            $viewBody .= '</script>';
+        }
+
+        $viewBody .= '<script type="text/javascript">';
+        $viewBody .= file_get_contents(VISOR_PATH . '/resources/visor.js');
+        $viewBody .= '</script>';
 
         return [
             'heading' => lang('Visor'),

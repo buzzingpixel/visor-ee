@@ -45,3 +45,13 @@
     padding-bottom: 2px;
     padding-top: 1px;
 }
+
+.filters__pending-wrapper {
+    background-color: rgb(255, 204, 0);
+    padding: 2px;
+}
+
+.filters__remove-filter {
+    padding-bottom: 2px !important;
+    padding-top: 1px !important;
+}
