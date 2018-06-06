@@ -17,6 +17,16 @@ class Visor_ext
     public $version = VISOR_VER;
 
     /**
+     * core_boot hook
+     * Deals with cookies for returning to visor on entry submission
+     */
+    public function core_boot()
+    {
+        // var_dump('here');
+        // die;
+    }
+
+    /**
      * cp_custom_menu hook
      * @param CustomMenuService $menu
      */

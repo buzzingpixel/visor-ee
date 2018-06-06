@@ -15,6 +15,7 @@ class Visor_upd
 {
     private static $hooksMethods = [
         'cp_custom_menu' => 'cp_custom_menu',
+        'core_boot' => 'core_boot',
     ];
 
     /** @var QueryBuilder $queryBuilder */
