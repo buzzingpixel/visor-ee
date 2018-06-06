@@ -7,6 +7,7 @@
  */
 
 use EllisLab\ExpressionEngine\Library\CP\Table;
+use EllisLab\ExpressionEngine\Library\CP\Pagination;
 use EllisLab\ExpressionEngine\Service\URL\URLFactory;
 use EllisLab\ExpressionEngine\Service\View\ViewFactory;
 use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
@@ -20,6 +21,8 @@ use EllisLab\ExpressionEngine\Service\Model\Query\Builder as ModelQueryBuilder;
  */
 class Visor_mcp
 {
+    const PAGE_LIMIT = 25;
+
     /** @var ModelFacade $modelFacade */
     private $modelFacade;
 
@@ -113,6 +116,7 @@ class Visor_mcp
                 'filters' => $filters,
                 'channelSelects' => $this->getChannelSelects(),
                 'filteredChannelLinks' => $this->getFilteredChannelLinks(),
+                'pagination' => $this->getPagination(),
                 'tableViewData' => $this
                     ->populateTableData(
                         $this->createTable(),
@@ -227,12 +231,48 @@ class Visor_mcp
      */
     private function getEntryModelCollection()
     {
-        $limit = $this->inputService->get('limit', 25);
+        $limit = $this->inputService->get('limit', true) ?: self::PAGE_LIMIT;
+        $page = $this->inputService->get('page', true) ?: 1;
 
-        /** @var ModelQueryBuilder $channelModelBuilder */
-        $channelModelBuilder = $this->modelFacade->get('ChannelEntry');
+        $channelModelBuilder = $this->getEntryModelBuilder();
         $channelModelBuilder->order('entry_date', 'desc');
         $channelModelBuilder->limit($limit);
+        $channelModelBuilder->offset(($page * $limit) - $limit);
+
+        return $channelModelBuilder->all();
+    }
+
+    private function getPagination()
+    {
+        $limit = $this->inputService->get('limit', true) ?: self::PAGE_LIMIT;
+
+        $channelModelBuilder = $this->getEntryModelBuilder();
+
+        $baseUrl = $this->cpUrlFactory->make('addons/settings/visor');
+
+        if ($this->inputService->get('filter')) {
+            $baseUrl->setQueryStringVariable(
+                'filter',
+                $this->inputService->get('filter')
+            );
+        }
+
+        /** @var Pagination $pagination */
+        $pagination = ee('CP/Pagination', $channelModelBuilder->count());
+        $pagination->perPage($limit);
+        $pagination->currentPage($this->inputService->get('page', true) ?: 1);
+
+        return $pagination->render($baseUrl);
+    }
+
+    /**
+     * Gets the entry model builder
+     * @return ModelQueryBuilder
+     */
+    private function getEntryModelBuilder()
+    {
+        /** @var ModelQueryBuilder $channelModelBuilder */
+        $channelModelBuilder = $this->modelFacade->get('ChannelEntry');
 
         $filters = $this->getFiltersFromInput();
 
@@ -261,7 +301,7 @@ class Visor_mcp
             );
         }
 
-        return $channelModelBuilder->all();
+        return $channelModelBuilder;
     }
 
     /**

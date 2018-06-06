@@ -6,6 +6,7 @@
 /** @var array $filters */
 /** @var array $channelSelects */
 /** @var array $filteredChannelLinks */
+/** @var string $pagination */
 
 $filterTypes = [
     '' => '--',
@@ -163,6 +164,8 @@ $filterTypes = [
     </fieldset>
 
 </div>
+
+<?=$pagination?>
 
 <script type="text/template" id="JSFilterListItemTemplate">
     <li class="JSFilterListItem" data-is-new="true">
