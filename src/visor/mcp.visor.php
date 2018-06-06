@@ -150,28 +150,81 @@ class Visor_mcp
     }
 
     /**
+     * Gets the filters
+     * @return array(
+     *     'channels' => array(),
+     *     'standard' => array(),
+     * )
+     */
+    private function getFiltersFromInput()
+    {
+        $filters = $this->inputService->get('filter', true);
+
+        if (! is_array($filters)) {
+            $filters = [];
+        }
+
+        $channels = [];
+        $standard = [];
+
+        foreach ($filters as $key => $filter) {
+            if (! isset($filter['type'], $filter['value'])) {
+                continue;
+            }
+
+            if ($filter['type'] !== 'channel') {
+                $standard[] = $filter;
+                continue;
+            }
+
+            $channels[$filter['value']] = $filter['value'];
+
+            unset($filters[$key]);
+        }
+
+        $channels = array_values($channels);
+
+        return compact('channels', 'standard');
+    }
+
+    /**
      * Gets channel collection
      * @return ModelCollection
      */
     private function getEntryModelCollection()
     {
         $limit = $this->inputService->get('limit', 25);
-        $channelsInput = (array) $this->inputService->get('channels');
-
-        $channels  = [];
-
-        foreach ($channelsInput as $channel) {
-            $channels[$channel] = $channel;
-        }
 
         /** @var ModelQueryBuilder $channelModelBuilder */
         $channelModelBuilder = $this->modelFacade->get('ChannelEntry');
         $channelModelBuilder->order('entry_date', 'desc');
         $channelModelBuilder->limit($limit);
 
-        if ($channels) {
+        $filters = $this->getFiltersFromInput();
+
+        if ($filters['channels']) {
             $channelModelBuilder->with('Channel');
-            $channelModelBuilder->filter('Channel.channel_name', 'IN', $channels);
+            $channelModelBuilder->filter(
+                'Channel.channel_name',
+                'IN',
+                $filters['channels']
+            );
+        }
+
+        foreach ($filters['standard'] as $filter) {
+            if ($filter['operator'] === 'contains') {
+                $channelModelBuilder->filter(
+                    $filter['type'],
+                    'LIKE',
+                    '%' . $filter['value'] . '%'
+                );
+                continue;
+            }
+
+            $channelModelBuilder->filter(
+                $filter['type'],
+                $filter['value']
+            );
         }
 
         return $channelModelBuilder->all();

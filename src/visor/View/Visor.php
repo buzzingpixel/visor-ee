@@ -67,22 +67,25 @@ $filterTypes = [
                                     >
                                         is
                                     </option>
-                                    <?php if ($filter['type'] !== 'channel') : ?>
                                     <option
                                         value="contains"
                                         class="JSOperatorContains"
                                         <?php if ($filter['operator'] === 'contains') : ?>
                                         selected
                                         <?php endif; ?>
+                                        <?php if ($filter['type'] === 'channel') : ?>
+                                        disabled
+                                        <?php endif; ?>
                                     >
                                         contains
                                     </option>
-                                    <?php endif; ?>
                                 </select>
                             </div>
                             <div class="filters__item-wrapper">
                                 <select
+                                    <?php if ($filter['type'] === 'channel') : ?>
                                     name="filter[<?=$key?>][value]"
+                                    <?php endif; ?>
                                     data-name="filter[<?=$key?>][value]"
                                     class="JSChannelFilterValues"
                                     <?php if ($filter['type'] !== 'channel') : ?>
@@ -92,7 +95,7 @@ $filterTypes = [
                                     <?php foreach ($channelSelects as $channelName => $channelTitle) : ?>
                                         <option
                                             value="<?=$channelName?>"
-                                            <?php if ($filter['type'] === 'channel' && $filter['value'] === $channelName) : ?>
+                                            <?php if ($filter['value'] === $channelName) : ?>
                                             selected
                                             <?php endif ?>
                                         >
@@ -102,7 +105,9 @@ $filterTypes = [
                                 </select>
                                 <input
                                     type="text"
+                                    <?php if ($filter['type'] !== 'channel') : ?>
                                     name="filter[<?=$key?>][value]"
+                                    <?php endif; ?>
                                     <?php if ($filter['type'] !== 'channel') : ?>
                                     value="<?=$filter['value']?>"
                                     <?php endif; ?>
