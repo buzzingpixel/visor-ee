@@ -7,6 +7,7 @@
 /** @var array $channelSelects */
 /** @var array $filteredChannelLinks */
 /** @var string $pagination */
+/** @var string $fullUrl */
 
 $filterTypes = [
     '' => '--',
@@ -153,15 +154,17 @@ $filterTypes = [
         </form>
     </header>
 
-    <?php $this->embed('ee:_shared/table', $tableViewData) ?>
-
-    <fieldset class="tbl-bulk-act hidden" style="display: none;">
-        <select name="bulk_action">
-            <option value="">-- with selected --</option>
-            <option value="remove" data-confirm-trigger="selected" rel="modal-confirm-remove-entry">Remove</option>
-        </select>
-        <button class="btn submit" data-conditional-modal="confirm-trigger">Submit</button>
-    </fieldset>
+    <?=form_open($baseUrl)?>
+        <input type="hidden" name="redirect" value="<?=$fullUrl?>">
+        <?php $this->embed('ee:_shared/table', $tableViewData) ?>
+        <fieldset class="tbl-bulk-act hidden" style="display: none;">
+            <select name="bulk_action">
+                <option value="">-- with selected --</option>
+                <option value="remove" data-confirm-trigger="selected" rel="modal-confirm-remove-entry">Remove</option>
+            </select>
+            <button class="btn submit">Submit</button>
+        </fieldset>
+    <?=form_close()?>
 
 </div>
 

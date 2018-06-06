@@ -7,9 +7,11 @@
  */
 
 use EllisLab\ExpressionEngine\Library\CP\Table;
+use EllisLab\ExpressionEngine\Service\Alert\Alert;
 use EllisLab\ExpressionEngine\Library\CP\Pagination;
 use EllisLab\ExpressionEngine\Service\URL\URLFactory;
 use EllisLab\ExpressionEngine\Service\View\ViewFactory;
+use EllisLab\ExpressionEngine\Service\Alert\AlertCollection;
 use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
 use EllisLab\ExpressionEngine\Model\Channel\Channel as ChannelModel;
 use EllisLab\ExpressionEngine\Service\Model\Collection as ModelCollection;
@@ -34,6 +36,12 @@ class Visor_mcp
 
     /** @var URLFactory $cpUrlService */
     private $cpUrlFactory;
+
+    /** @var AlertCollection $alertCollection */
+    private $alertCollection;
+
+    /** @var EE_Functions $eeFunctions */
+    private $eeFunctions;
 
     private static $defaultColumns = [
         [
@@ -84,6 +92,8 @@ class Visor_mcp
         $this->inputService = ee()->input;
         $this->viewFactory = ee('View');
         $this->cpUrlFactory = ee('CP/URL');
+        $this->alertCollection = ee('CP/Alert');
+        $this->eeFunctions = ee()->functions;
     }
 
     /**
@@ -92,6 +102,11 @@ class Visor_mcp
      */
     public function index()
     {
+        if (strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
+            $this->deletePostedEntries();
+            exit();
+        }
+
         $filters = $this->inputService->get('filter', true);
 
         if (! is_array($filters)) {
@@ -113,6 +128,7 @@ class Visor_mcp
                 'viewFactory' => $this->viewFactory,
                 'baseUrl' => $this->cpUrlFactory->make('addons/settings/visor')
                     ->compile(),
+                'fullUrl' => $this->getFullUrlToPage(),
                 'filters' => $filters,
                 'channelSelects' => $this->getChannelSelects(),
                 'filteredChannelLinks' => $this->getFilteredChannelLinks(),
@@ -242,27 +258,40 @@ class Visor_mcp
         return $channelModelBuilder->all();
     }
 
+    /**
+     * Gets URL
+     * @return \EllisLab\ExpressionEngine\Library\CP\URL
+     */
+    private function getFullUrlToPage()
+    {
+        $url = $this->cpUrlFactory->make('addons/settings/visor');
+
+        if ($this->inputService->get('filter')) {
+            $url->setQueryStringVariable(
+                'filter',
+                $this->inputService->get('filter')
+            );
+        }
+
+        return $url;
+    }
+
+    /**
+     * Gets pagination
+     * @return string
+     */
     private function getPagination()
     {
         $limit = $this->inputService->get('limit', true) ?: self::PAGE_LIMIT;
 
         $channelModelBuilder = $this->getEntryModelBuilder();
 
-        $baseUrl = $this->cpUrlFactory->make('addons/settings/visor');
-
-        if ($this->inputService->get('filter')) {
-            $baseUrl->setQueryStringVariable(
-                'filter',
-                $this->inputService->get('filter')
-            );
-        }
-
         /** @var Pagination $pagination */
         $pagination = ee('CP/Pagination', $channelModelBuilder->count());
         $pagination->perPage($limit);
         $pagination->currentPage($this->inputService->get('page', true) ?: 1);
 
-        return $pagination->render($baseUrl);
+        return $pagination->render($this->getFullUrlToPage());
     }
 
     /**
@@ -440,5 +469,41 @@ class Visor_mcp
         }
 
         return $channelSelects;
+    }
+
+    /**
+     * Deletes posted entries
+     */
+    private function deletePostedEntries()
+    {
+        /** @var Alert $alert */
+        $alert = $this->alertCollection->make('visor');
+
+        $entryIds = (array) $this->inputService->post('entry');
+
+        if (! $entryIds) {
+            $alert->asIssue();
+            $alert->withTitle(lang('error'));
+            $alert->addToBody(lang('noEntriesSelected'));
+            $alert->defer();
+            $this->eeFunctions->redirect(
+                $this->inputService->post('redirect') ?: $this->getFullUrlToPage()
+            );
+            exit();
+        }
+
+        /** @var ModelQueryBuilder $channelModelBuilder */
+        $channelModelBuilder = $this->modelFacade->get('ChannelEntry');
+        $channelModelBuilder->filter('entry_id', 'IN', array_keys($entryIds));
+        $channelModelBuilder->delete();
+
+        $alert->asSuccess();
+        $alert->withTitle(lang('success'));
+        $alert->addToBody(lang('selectedEntriesDeleted'));
+        $alert->defer();
+        $this->eeFunctions->redirect(
+            $this->inputService->post('redirect') ?: $this->getFullUrlToPage()
+        );
+        exit();
     }
 }

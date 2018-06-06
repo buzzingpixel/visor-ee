@@ -13,4 +13,8 @@ $lang = [
     'date' => 'Date',
     'status' => 'Status',
     'noEntries' => 'No entries were found',
+    'success' => 'Success',
+    'error' => 'Error',
+    'selectedEntriesDeleted' => 'The selected entries were deleted',
+    'noEntriesSelected' => 'You did not select any entries',
 ];
