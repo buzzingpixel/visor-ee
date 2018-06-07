@@ -11,6 +11,7 @@ use EllisLab\ExpressionEngine\Service\Alert\Alert;
 use EllisLab\ExpressionEngine\Library\CP\Pagination;
 use EllisLab\ExpressionEngine\Service\URL\URLFactory;
 use EllisLab\ExpressionEngine\Service\View\ViewFactory;
+use EllisLab\ExpressionEngine\Model\Channel\ChannelField;
 use EllisLab\ExpressionEngine\Service\Alert\AlertCollection;
 use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
 use EllisLab\ExpressionEngine\Model\Channel\Channel as ChannelModel;
@@ -453,7 +454,12 @@ class Visor_mcp
                 }
 
                 if (! $parentProperty) {
-                    $propertyValue = $channelModel->getProperty($property);
+                    if (isset($column['isCustomField']) && $column['isCustomField']) {
+                        $fieldId = $this->getFieldId($property);
+                        $propertyValue = $channelModel->getProperty("field_id_{$fieldId}");
+                    } else {
+                        $propertyValue = $channelModel->getProperty($property);
+                    }
                 }
 
                 switch ($formatting) {
@@ -473,6 +479,12 @@ class Visor_mcp
                         '</strong>';
                         break;
                     default:
+                        $charCount = strlen($propertyValue);
+
+                        if ($charCount > 100) {
+                            $propertyValue = substr($propertyValue, 0, 97) . '...';
+                        }
+
                         $data[] = $propertyValue;
                 }
             }
@@ -545,5 +557,34 @@ class Visor_mcp
             $this->inputService->post('redirect') ?: $this->getFullUrlToPage()
         );
         exit();
+    }
+
+    /** @var array $fieldNameToIdMap */
+    private $fieldNameToIdMap;
+
+    /**
+     * Gets field ID from field property name
+     * @param $property
+     * @return mixed|null
+     */
+    private function getFieldId($property)
+    {
+        if ($this->fieldNameToIdMap === null) {
+            /** @var ModelQueryBuilder $fieldsQueryBuilder */
+            $fieldsQueryBuilder = $this->modelFacade->get('ChannelField');
+
+            $this->fieldNameToIdMap = [];
+
+            foreach ($fieldsQueryBuilder->all() as $channelField) {
+                /** @var ChannelField $channelField */
+                $id = (int) $channelField->getProperty('field_id');
+                $name = $channelField->getProperty('field_name');
+                $this->fieldNameToIdMap[$name] = $id;
+            }
+        }
+
+        return isset($this->fieldNameToIdMap[$property]) ?
+            $this->fieldNameToIdMap[$property] :
+            null;
     }
 }
