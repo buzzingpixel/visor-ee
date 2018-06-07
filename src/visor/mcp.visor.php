@@ -228,12 +228,20 @@ class Visor_mcp
 
         $links = [];
 
+        $visorFilters = $this->inputService->get('filter') ?: [];
+
         foreach ($channels as $channel) {
             /** @var ChannelModel $channel */
             $links[] = [
                 'title' => $channel->getProperty('channel_title'),
                 'link' => $this->cpUrlFactory
-                    ->make("publish/create/{$channel->getProperty('channel_id')}")
+                    ->make(
+                        "publish/create/{$channel->getProperty('channel_id')}",
+                        [
+                            'visorReturn' => 'true',
+                            'visorFilters' => $visorFilters,
+                        ]
+                    )
                     ->compile()
             ];
         }
@@ -365,12 +373,18 @@ class Visor_mcp
     ) {
         $tableData = [];
 
+        $visorFilters = $this->inputService->get('filter') ?: [];
+
         foreach ($entryModelCollection as $channelModel) {
             /** @var ChannelEntryModel $channelModel */
 
             $url = $this->cpUrlFactory
                 ->make(
-                    "publish/edit/entry/{$channelModel->getProperty('entry_id')}"
+                    "publish/edit/entry/{$channelModel->getProperty('entry_id')}",
+                    [
+                        'visorReturn' => 'true',
+                        'visorFilters' => $visorFilters,
+                    ]
                 )
                 ->compile();
 
