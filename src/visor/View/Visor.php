@@ -9,6 +9,8 @@
 /** @var string $pagination */
 /** @var string $fullUrl */
 
+$isEE3 = version_compare(APP_VER, '4.0.0', '<');
+
 $filterTypes = [
     '' => '--',
     'channel' => 'Channel',
@@ -32,7 +34,7 @@ $filterTypes = [
                             New In <?=$link['title']?>
                         </a>
                     <?php endforeach; ?>
-                <?php else : ?>
+                <?php elseif (! $isEE3) : ?>
                     <div class="filter-item filter-item--right">
                         <a
                             href="#"
