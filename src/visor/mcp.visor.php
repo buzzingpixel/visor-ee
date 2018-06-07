@@ -12,6 +12,7 @@ use EllisLab\ExpressionEngine\Library\CP\Pagination;
 use EllisLab\ExpressionEngine\Service\URL\URLFactory;
 use EllisLab\ExpressionEngine\Service\View\ViewFactory;
 use EllisLab\ExpressionEngine\Model\Channel\ChannelField;
+use EllisLab\ExpressionEngine\Model\File\File as FileModel;
 use EllisLab\ExpressionEngine\Service\Alert\AlertCollection;
 use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
 use EllisLab\ExpressionEngine\Model\Channel\Channel as ChannelModel;
@@ -46,6 +47,9 @@ class Visor_mcp
 
     /** @var \EE_Config $eeConfigService */
     private $eeConfigService;
+
+    /** @var \EE_Typography $eeTypography */
+    private $eeTypography;
 
     private static $defaultColumns = [
         [
@@ -99,6 +103,10 @@ class Visor_mcp
         $this->alertCollection = ee('CP/Alert');
         $this->eeFunctions = ee()->functions;
         $this->eeConfigService = ee()->config;
+
+        ee()->load->library('typography');
+        $this->eeTypography = ee()->typography;
+        $this->eeTypography->parse_images = true;
     }
 
     /**
@@ -478,6 +486,9 @@ class Visor_mcp
                             "<a href=\"{$url}\">{$propertyValue}</a>" .
                         '</strong>';
                         break;
+                    case 'file':
+                        $data[] = $this->parseImageFieldValueForDisplay($propertyValue);
+                        break;
                     default:
                         $charCount = strlen($propertyValue);
 
@@ -586,5 +597,50 @@ class Visor_mcp
         return isset($this->fieldNameToIdMap[$property]) ?
             $this->fieldNameToIdMap[$property] :
             null;
+    }
+
+    /**
+     * Parses image field value for display
+     * @param string $propertyValue
+     * @return string
+     */
+    private function parseImageFieldValueForDisplay($propertyValue)
+    {
+        if (! $propertyValue) {
+            return '';
+        }
+
+        preg_match('/{filedir_(\d+)}(.*)/', $propertyValue, $matches);
+
+        $fileDirId = isset($matches[1]) ? ((int) $matches[1]) : null;
+        $fileName = isset($matches[2]) ? $matches[2] : null;
+
+        if (! $fileDirId ||  ! $fileName) {
+            return '';
+        }
+
+        /** @var ModelQueryBuilder $fileQuery */
+        $fileQuery = $this->modelFacade->get('File');
+        $fileQuery->filter('file_name', $fileName);
+        $fileQuery->filter('upload_location_id', $fileDirId);
+
+        /** @var FileModel $fileModel */
+        $fileModel = $fileQuery->first();
+
+        if (! $fileModel) {
+            return '';
+        }
+
+        $str = '<div class="visor-file-wrapper">';
+
+        if ($fileModel->isImage()) {
+            $str .= "<img src=\"{$fileModel->getThumbnailUrl()}\" alt=\"{$fileModel->getProperty('title')}\">";
+        } else {
+            $str .= $fileName;
+        }
+
+        $str .= '</div>';
+
+        return $str;
     }
 }
