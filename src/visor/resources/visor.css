@@ -1,6 +1,11 @@
 .VisorMaster td {
     max-width: 220px;
+    min-width: 100px;
     white-space: normal;
+}
+
+.VisorMaster td:last-child {
+    min-width: 0;
 }
 
 .section-header {
