@@ -19,7 +19,7 @@ $filterTypes = [
 
 ?>
 
-<div>
+<div class="VisorMaster">
 
     <header class="section-header">
         <form action="<?=$baseUrl?>" class="JSVisorFilterForm">
