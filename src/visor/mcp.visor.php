@@ -433,6 +433,13 @@ class Visor_mcp
                             $property
                         );
                         break;
+                    case 'matrix':
+                        $data[] = $this->parseMatrixField(
+                            $column,
+                            (int) $entryModel->getProperty('entry_id'),
+                            $property
+                        );
+                        break;
                     default:
                         $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue);
                 }
@@ -708,6 +715,120 @@ class Visor_mcp
             ->where('field_id', $fieldId)
             ->where('col_name', $colName)
             ->get('grid_columns')
+            ->row();
+
+        if (! isset($query->col_id)) {
+            return 0;
+        }
+
+        return (int) $query->col_id;
+    }
+
+    /**
+     * Parses a matrix field
+     * @param $column
+     * @param $entryId
+     * @param $fieldName
+     * @return string
+     */
+    private function parseMatrixField($column, $entryId, $fieldName)
+    {
+        if (! isset($column['matrixItems'])) {
+            return '';
+        }
+
+        $matrixItems = $column['matrixItems'];
+
+        /** @var Table $table */
+        $table = ee('CP/Table');
+
+        $table->setNoResultsText('noRows');
+
+        $table->setColumns($matrixItems);
+
+        $fieldId = $this->getFieldId($fieldName);
+
+        $matrixFieldQuery = $this->queryBuilder->where('entry_id', $entryId)
+            ->where('field_id', $fieldId)
+            ->order_by('row_order', 'asc')
+            ->get('matrix_data')
+            ->result();
+
+        $tableData = [];
+
+        // We need to go through each grid row
+        foreach ($matrixFieldQuery as $matrixRow) {
+            $data = [];
+
+            // And we need to go through each grid column
+            foreach ($matrixItems as $matrixColumn) {
+                $property = isset($matrixColumn['modelProperty']) ?
+                    $matrixColumn['modelProperty'] :
+                    null;
+
+                if (! $property) {
+                    $data[] = '';
+                    continue;
+                }
+
+                $formatting = isset($matrixColumn['propertyFormatting']) ?
+                    $matrixColumn['propertyFormatting'] :
+                    null;
+
+                $colId = $this->getMatrixColId($fieldId, $property);
+
+                if (! $colId) {
+                    $data[] = '';
+                    continue;
+                }
+
+                $propertyValue = isset($matrixRow->{"col_id_{$colId}"}) ?
+                    $matrixRow->{"col_id_{$colId}"} :
+                    null;
+
+                if (! $propertyValue) {
+                    $data[] = '';
+                    continue;
+                }
+
+                switch ($formatting) {
+                    case 'date':
+                        $data[] = $this->parseDateFieldValueForDisplay($propertyValue, $matrixColumn);
+                        break;
+                    case 'file':
+                        $data[] = $this->parseImageFieldValueForDisplay($propertyValue);
+                        break;
+                    default:
+                        $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue);
+                }
+            }
+
+            $tableData[] = $data;
+        }
+
+        $table->setData($tableData);
+
+        $returnString = '<div class="visor-grid-wrapper">';
+
+        $returnString .= $this->viewFactory->make('ee:_shared/table')
+            ->render($table->viewData());
+
+        $returnString .= '</div>';
+
+        return $returnString;
+    }
+
+    /**
+     * @param $fieldId
+     * @param $colName
+     * @return int
+     */
+    private function getMatrixColId($fieldId, $colName)
+    {
+        $query = $this->queryBuilder->select('col_id')
+            ->where('field_id', $fieldId)
+            ->where('col_name', $colName)
+            ->get('matrix_cols')
             ->row();
 
         if (! isset($query->col_id)) {
