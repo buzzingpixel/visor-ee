@@ -17,4 +17,6 @@ $lang = [
     'error' => 'Error',
     'selectedEntriesDeleted' => 'The selected entries were deleted',
     'noEntriesSelected' => 'You did not select any entries',
+    'visor' => 'Visor',
+    'viewAll' => 'View All',
 ];

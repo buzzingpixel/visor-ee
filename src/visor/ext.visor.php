@@ -7,6 +7,9 @@
  */
 
 use EllisLab\ExpressionEngine\Service\URL\URLFactory;
+use EllisLab\ExpressionEngine\Service\Model\Collection;
+use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
+use EllisLab\ExpressionEngine\Model\Channel\Channel as ChannelModel;
 use EllisLab\ExpressionEngine\Service\CustomMenu\Menu as CustomMenuService;
 
 /**
@@ -29,12 +32,20 @@ class Visor_ext
     /** @var EE_Functions $eeFunctions */
     private $eeFunctions;
 
+    /** @var ModelFacade $modelFacade */
+    private $modelFacade;
+
+    /** @var \EE_Config $eeConfigService */
+    private $eeConfigService;
+
     public function __construct()
     {
         $this->inputService = ee()->input;
         $this->uriService = ee()->uri;
         $this->cpUrlFactory = ee('CP/URL');
         $this->eeFunctions = ee()->functions;
+        $this->modelFacade = ee('Model');
+        $this->eeConfigService = ee()->config;
     }
 
     /**
@@ -123,5 +134,52 @@ class Visor_ext
      */
     public function cp_custom_menu(CustomMenuService $menu)
     {
+        ee()->lang->loadfile('visor');
+
+        $channelQuery = $this->modelFacade->get('Channel');
+
+        $channelQuery->order('channel_title', 'asc');
+
+        /** @var Collection $channels */
+        $channels = $channelQuery->all();
+
+        $title = $this->eeConfigService->item('menuTitle', 'visor') ?: lang('visor');
+
+        if ($channels->count() < 2) {
+            $menu->addItem(
+                $title,
+                $this->cpUrlFactory->make('addons/settings/visor')
+            );
+
+            return;
+        }
+
+        $submenu = $menu->addSubmenu($title);
+
+        $submenu->addItem(
+            lang('viewAll'),
+            $this->cpUrlFactory->make('addons/settings/visor')
+        );
+
+        foreach ($channels as $channel) {
+            /** @var ChannelModel $channel */
+
+            $submenu->addItem(
+                $channel->getProperty('channel_title'),
+                $this->cpUrlFactory
+                    ->make(
+                        'addons/settings/visor',
+                        [
+                            'filter' => [
+                                uniqid('', false) => [
+                                    'type' => 'channel',
+                                    'operator' => 'is',
+                                    'value' => $channel->getProperty('channel_name'),
+                                ],
+                            ],
+                        ]
+                    )
+            );
+        }
     }
 }
