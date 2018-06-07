@@ -15,6 +15,7 @@ $filterTypes = [
     'entry_id' => 'Entry ID',
     'title' => 'Title',
     'url_title' => 'URL Title',
+    'status' => 'Status',
 ];
 
 ?>
