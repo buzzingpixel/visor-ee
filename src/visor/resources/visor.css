@@ -1,6 +1,12 @@
-.VisorMaster td {
+.visor-text-field {
     max-width: 300px;
-    min-width: 100px;
+}
+
+.visor-long-text-field {
+    min-width: 230px;
+}
+
+.VisorMaster td {
     white-space: normal;
 }
 

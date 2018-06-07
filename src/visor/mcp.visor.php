@@ -121,7 +121,7 @@ class Visor_mcp
 
         $filters = $this->inputService->get('filter', true);
 
-        if (!is_array($filters)) {
+        if (! is_array($filters)) {
             $filters = [];
         }
 
@@ -175,7 +175,7 @@ class Visor_mcp
     {
         $filters = $this->inputService->get('filter', true);
 
-        if (!is_array($filters)) {
+        if (! is_array($filters)) {
             $filters = [];
         }
 
@@ -183,7 +183,7 @@ class Visor_mcp
         $standard = [];
 
         foreach ($filters as $key => $filter) {
-            if (!isset($filter['type'], $filter['value'])) {
+            if (! isset($filter['type'], $filter['value'])) {
                 continue;
             }
 
@@ -414,7 +414,7 @@ class Visor_mcp
                     $propertyValue = $entryModel->{$parentProperty}->getProperty($property);
                 }
 
-                if (!$parentProperty) {
+                if (! $parentProperty) {
                     if (isset($column['isCustomField']) && $column['isCustomField']) {
                         $fieldId = $this->getFieldId($property);
                         $propertyValue = $entryModel->getProperty("field_id_{$fieldId}");
@@ -428,7 +428,7 @@ class Visor_mcp
                         $data[] = $this->parseDateFieldValueForDisplay($propertyValue, $column);
                         break;
                     case 'title':
-                        $data[] = '<strong style="font-style: normal;">' . "<a href=\"{$url}\">{$propertyValue}</a>" . '</strong>';
+                        $data[] = '<strong style="font-style: normal; white-space: nowrap;">' . "<a href=\"{$url}\">{$propertyValue}</a>" . '</strong>';
                         break;
                     case 'file':
                         $data[] = $this->parseImageFieldValueForDisplay($propertyValue);
@@ -492,7 +492,7 @@ class Visor_mcp
 
         $entryIds = (array)$this->inputService->post('entry');
 
-        if (!$entryIds) {
+        if (! $entryIds) {
             $alert->asIssue();
             $alert->withTitle(lang('error'));
             $alert->addToBody(lang('noEntriesSelected'));
@@ -574,7 +574,7 @@ class Visor_mcp
         $fileDirId = isset($matches[1]) ? ((int)$matches[1]) : null;
         $fileName = isset($matches[2]) ? $matches[2] : null;
 
-        if (!$fileDirId || !$fileName) {
+        if (! $fileDirId || ! $fileName) {
             return '';
         }
 
@@ -586,7 +586,7 @@ class Visor_mcp
         /** @var FileModel $fileModel */
         $fileModel = $fileQuery->first();
 
-        if (!$fileModel) {
+        if (! $fileModel) {
             return '';
         }
 
@@ -613,13 +613,23 @@ class Visor_mcp
      */
     private function parseDefaultFieldValueForDisplay($propertyValue)
     {
+        $propertyValue = strip_tags($propertyValue);
+
         $charCount = strlen($propertyValue);
 
         if ($charCount > 100) {
             $propertyValue = substr($propertyValue, 0, 97) . '...';
         }
 
-        return $propertyValue;
+        $charCount = strlen($propertyValue);
+
+        $classes = 'visor-text-field';
+
+        if ($charCount > 40) {
+            $classes .= ' visor-long-text-field';
+        }
+
+        return "<div class=\"{$classes}\">{$propertyValue}</div>";
     }
 
     /**
