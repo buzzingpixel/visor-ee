@@ -55,7 +55,7 @@ $filterTypes = [
             <div class="filters">
                 <ul class="JSFilterList">
                     <?php foreach ($filters as $key => $filter) : ?>
-                        <li class="JSFilterListItem" data-is-new="false">
+                        <li class="visor-filter-item JSFilterListItem" data-is-new="false">
                             <div class="JSPendingWrapper">
                                 <div class="filters__item-wrapper">
                                     <select name="filter[<?=$key?>][type]" class="JSFilterType">
@@ -172,7 +172,7 @@ $filterTypes = [
 <?=$pagination?>
 
 <script type="text/template" id="JSFilterListItemTemplate">
-    <li class="JSFilterListItem" data-is-new="true">
+    <li class="visor-filter-item JSFilterListItem" data-is-new="true">
         <div class="filters__pending-wrapper JSPendingWrapper">
             <div class="filters__item-wrapper">
                 <select name="filter[{{filterKey}}][type]" class="JSFilterType">

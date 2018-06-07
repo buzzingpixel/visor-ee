@@ -1,0 +1,13 @@
+.VisorMaster .filters {
+    float: none;
+}
+
+.VisorMaster .section-header__controls {
+    float: right;
+}
+
+.visor-filter-item {
+    display: block !important;
+    margin: 0 !important;
+    margin-bottom: 4px !important;
+}

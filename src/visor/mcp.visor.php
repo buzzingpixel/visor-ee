@@ -128,6 +128,13 @@ class Visor_mcp
         $viewBody = '<style type="text/css">';
         $viewBody .= file_get_contents(VISOR_PATH . '/resources/visor.css');
         $viewBody .= '</style>';
+
+        if (version_compare(APP_VER, '4.0.0', '<')) {
+            $viewBody .= '<style type="text/css">';
+            $viewBody .= file_get_contents(VISOR_PATH . '/resources/visoree3.css');
+            $viewBody .= '</style>';
+        }
+
         $viewBody .= '<script type="text/javascript">';
         $viewBody .= file_get_contents(VISOR_PATH . '/resources/FAB.controller.js');
         $viewBody .= '</script>';
