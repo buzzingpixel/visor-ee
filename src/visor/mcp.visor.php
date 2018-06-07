@@ -16,6 +16,7 @@ use EllisLab\ExpressionEngine\Model\File\File as FileModel;
 use EllisLab\ExpressionEngine\Service\Alert\AlertCollection;
 use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
 use EllisLab\ExpressionEngine\Model\Channel\Channel as ChannelModel;
+use EllisLab\ExpressionEngine\Service\Database\Query as QueryBuilder;
 use EllisLab\ExpressionEngine\Service\Model\Collection as ModelCollection;
 use EllisLab\ExpressionEngine\Model\Channel\ChannelEntry as ChannelEntryModel;
 use EllisLab\ExpressionEngine\Service\Model\Query\Builder as ModelQueryBuilder;
@@ -48,8 +49,8 @@ class Visor_mcp
     /** @var \EE_Config $eeConfigService */
     private $eeConfigService;
 
-    /** @var \EE_Typography $eeTypography */
-    private $eeTypography;
+    /** @var QueryBuilder $queryBuilder */
+    private $queryBuilder;
 
     private static $defaultColumns = [
         [
@@ -103,14 +104,12 @@ class Visor_mcp
         $this->alertCollection = ee('CP/Alert');
         $this->eeFunctions = ee()->functions;
         $this->eeConfigService = ee()->config;
-
-        ee()->load->library('typography');
-        $this->eeTypography = ee()->typography;
-        $this->eeTypography->parse_images = true;
+        $this->queryBuilder = ee('db');
     }
 
     /**
      * Displays the index page
+     *
      * @return array
      */
     public function index()
@@ -122,7 +121,7 @@ class Visor_mcp
 
         $filters = $this->inputService->get('filter', true);
 
-        if (! is_array($filters)) {
+        if (!is_array($filters)) {
             $filters = [];
         }
 
@@ -136,40 +135,17 @@ class Visor_mcp
         $viewBody .= file_get_contents(VISOR_PATH . '/resources/FAB.model.js');
         $viewBody .= '</script>';
 
-        $viewBody .= $this->viewFactory->make('visor:Visor')
-            ->render([
-                'viewFactory' => $this->viewFactory,
-                'baseUrl' => $this->cpUrlFactory->make('addons/settings/visor')
-                    ->compile(),
-                'fullUrl' => $this->getFullUrlToPage(),
-                'filters' => $filters,
-                'channelSelects' => $this->getChannelSelects(),
-                'filteredChannelLinks' => $this->getFilteredChannelLinks(),
-                'pagination' => $this->getPagination(),
-                'tableViewData' => $this
-                    ->populateTableData(
-                        $this->createTable(),
-                        $this->getEntryModelCollection()
-                    )
-                    ->viewData(),
-            ]);
+        $viewBody .= $this->viewFactory->make('visor:Visor')->render(['viewFactory' => $this->viewFactory, 'baseUrl' => $this->cpUrlFactory->make('addons/settings/visor')->compile(), 'fullUrl' => $this->getFullUrlToPage(), 'filters' => $filters, 'channelSelects' => $this->getChannelSelects(), 'filteredChannelLinks' => $this->getFilteredChannelLinks(), 'pagination' => $this->getPagination(), 'tableViewData' => $this->populateTableData($this->createTable(), $this->getEntryModelCollection())->viewData(),]);
 
-        $controllersDirectory = new \DirectoryIterator(
-            VISOR_PATH . '/resources/controllers'
-        );
+        $controllersDirectory = new \DirectoryIterator(VISOR_PATH . '/resources/controllers');
 
         foreach ($controllersDirectory as $fileInfo) {
-            if ($fileInfo->isDot() ||
-                $fileInfo->isDir() ||
-                $fileInfo->getExtension() !== 'js'
-            ) {
+            if ($fileInfo->isDot() || $fileInfo->isDir() || $fileInfo->getExtension() !== 'js') {
                 continue;
             }
 
             $viewBody .= '<script type="text/javascript">';
-            $viewBody .= file_get_contents(
-                $fileInfo->getPath() . '/' . $fileInfo->getFilename()
-            );
+            $viewBody .= file_get_contents($fileInfo->getPath() . '/' . $fileInfo->getFilename());
             $viewBody .= '</script>';
         }
 
@@ -177,14 +153,12 @@ class Visor_mcp
         $viewBody .= file_get_contents(VISOR_PATH . '/resources/visor.js');
         $viewBody .= '</script>';
 
-        return [
-            'heading' => lang('Visor'),
-            'body' => $viewBody,
-        ];
+        return ['heading' => lang('Visor'), 'body' => $viewBody,];
     }
 
     /**
      * Gets the filters
+     *
      * @return array(
      *     'channels' => array(),
      *     'standard' => array(),
@@ -194,7 +168,7 @@ class Visor_mcp
     {
         $filters = $this->inputService->get('filter', true);
 
-        if (! is_array($filters)) {
+        if (!is_array($filters)) {
             $filters = [];
         }
 
@@ -202,7 +176,7 @@ class Visor_mcp
         $standard = [];
 
         foreach ($filters as $key => $filter) {
-            if (! isset($filter['type'], $filter['value'])) {
+            if (!isset($filter['type'], $filter['value'])) {
                 continue;
             }
 
@@ -223,6 +197,7 @@ class Visor_mcp
 
     /**
      * Gets filtered channel links
+     *
      * @return array
      */
     private function getFilteredChannelLinks()
@@ -245,18 +220,7 @@ class Visor_mcp
 
         foreach ($channels as $channel) {
             /** @var ChannelModel $channel */
-            $links[] = [
-                'title' => $channel->getProperty('channel_title'),
-                'link' => $this->cpUrlFactory
-                    ->make(
-                        "publish/create/{$channel->getProperty('channel_id')}",
-                        [
-                            'visorReturn' => 'true',
-                            'visorFilters' => $visorFilters,
-                        ]
-                    )
-                    ->compile()
-            ];
+            $links[] = ['title' => $channel->getProperty('channel_title'), 'link' => $this->cpUrlFactory->make("publish/create/{$channel->getProperty('channel_id')}", ['visorReturn' => 'true', 'visorFilters' => $visorFilters,])->compile()];
         }
 
         return $links;
@@ -264,6 +228,7 @@ class Visor_mcp
 
     /**
      * Gets channel collection
+     *
      * @return ModelCollection
      */
     private function getEntryModelCollection()
@@ -281,6 +246,7 @@ class Visor_mcp
 
     /**
      * Gets URL
+     *
      * @return \EllisLab\ExpressionEngine\Library\CP\URL
      */
     private function getFullUrlToPage()
@@ -288,10 +254,7 @@ class Visor_mcp
         $url = $this->cpUrlFactory->make('addons/settings/visor');
 
         if ($this->inputService->get('filter')) {
-            $url->setQueryStringVariable(
-                'filter',
-                $this->inputService->get('filter')
-            );
+            $url->setQueryStringVariable('filter', $this->inputService->get('filter'));
         }
 
         return $url;
@@ -299,6 +262,7 @@ class Visor_mcp
 
     /**
      * Gets pagination
+     *
      * @return string
      */
     private function getPagination()
@@ -317,6 +281,7 @@ class Visor_mcp
 
     /**
      * Gets the entry model builder
+     *
      * @return ModelQueryBuilder
      */
     private function getEntryModelBuilder()
@@ -328,27 +293,16 @@ class Visor_mcp
 
         if ($filters['channels']) {
             $channelModelBuilder->with('Channel');
-            $channelModelBuilder->filter(
-                'Channel.channel_name',
-                'IN',
-                $filters['channels']
-            );
+            $channelModelBuilder->filter('Channel.channel_name', 'IN', $filters['channels']);
         }
 
         foreach ($filters['standard'] as $filter) {
             if ($filter['operator'] === 'contains') {
-                $channelModelBuilder->filter(
-                    $filter['type'],
-                    'LIKE',
-                    '%' . $filter['value'] . '%'
-                );
+                $channelModelBuilder->filter($filter['type'], 'LIKE', '%' . $filter['value'] . '%');
                 continue;
             }
 
-            $channelModelBuilder->filter(
-                $filter['type'],
-                $filter['value']
-            );
+            $channelModelBuilder->filter($filter['type'], $filter['value']);
         }
 
         return $channelModelBuilder;
@@ -356,6 +310,7 @@ class Visor_mcp
 
     /**
      * Creates the table
+     *
      * @return Table
      */
     private function createTable()
@@ -376,35 +331,30 @@ class Visor_mcp
         $columnConfig = $this->eeConfigService->item('channelConfig', 'visor') ?: [];
         $columnConfig = isset($columnConfig[$channel]) ? $columnConfig[$channel] : self::$defaultColumns;
 
-        $table->setColumns(array_merge($columnConfig, [
-            [
-                'type' => Table::COL_CHECKBOX,
-            ],
-        ]));
+        $table->setColumns(array_merge($columnConfig, [['type' => Table::COL_CHECKBOX,],]));
 
         return $table;
     }
 
     /**
      * Populates the table data
+     *
      * @param Table $table
      * @param ModelCollection $entryModelCollection
      * @return Table
      */
-    private function populateTableData(
-        Table $table,
-        ModelCollection $entryModelCollection
-    ) {
+    private function populateTableData(Table $table, ModelCollection $entryModelCollection)
+    {
         $tableData = [];
 
         $visorFilters = $this->inputService->get('filter') ?: [];
 
-        foreach ($entryModelCollection as $channelModel) {
-            /** @var ChannelEntryModel $channelModel */
+        foreach ($entryModelCollection as $entryModel) {
+            /** @var ChannelEntryModel $entryModel */
 
             $url = $this->cpUrlFactory
                 ->make(
-                    "publish/edit/entry/{$channelModel->getProperty('entry_id')}",
+                    "publish/edit/entry/{$entryModel->getProperty('entry_id')}",
                     [
                         'visorReturn' => 'true',
                         'visorFilters' => $visorFilters,
@@ -426,9 +376,7 @@ class Visor_mcp
             $columnConfig = isset($columnConfig[$channel]) ? $columnConfig[$channel] : self::$defaultColumns;
 
             foreach ($columnConfig as $column) {
-                $property = isset($column['modelProperty']) ?
-                    $column['modelProperty'] :
-                    null;
+                $property = isset($column['modelProperty']) ? $column['modelProperty'] : null;
 
                 $parentCheck = explode('.', $property);
                 $parentProperty = null;
@@ -440,70 +388,57 @@ class Visor_mcp
 
                 if ((
                         $parentProperty &&
-                        ! $channelModel->{$parentProperty}->hasProperty($property)
+                        ! $entryModel->{$parentProperty}->hasProperty($property)
                     ) ||
                     (
                         ! $parentProperty &&
-                        ! $channelModel->hasProperty($property)
+                        ! $entryModel->hasProperty($property)
                     )
                 ) {
                     $data[] = '';
                     continue;
                 }
 
-                $formatting = isset($column['propertyFormatting']) ?
-                    $column['propertyFormatting'] :
-                    null;
+                $formatting = isset($column['propertyFormatting']) ? $column['propertyFormatting'] : null;
 
                 $propertyValue = null;
 
                 if ($parentProperty) {
-                    $propertyValue = $channelModel->{$parentProperty}->getProperty($property);
+                    $propertyValue = $entryModel->{$parentProperty}->getProperty($property);
                 }
 
-                if (! $parentProperty) {
+                if (!$parentProperty) {
                     if (isset($column['isCustomField']) && $column['isCustomField']) {
                         $fieldId = $this->getFieldId($property);
-                        $propertyValue = $channelModel->getProperty("field_id_{$fieldId}");
+                        $propertyValue = $entryModel->getProperty("field_id_{$fieldId}");
                     } else {
-                        $propertyValue = $channelModel->getProperty($property);
+                        $propertyValue = $entryModel->getProperty($property);
                     }
                 }
 
                 switch ($formatting) {
                     case 'date':
-                        $format = isset($column['dateFormat']) ?
-                            $column['dateFormat'] :
-                            'n/j/Y g:i A';
-
-                        $dateTime = new \DateTime();
-                        $dateTime->setTimestamp($propertyValue);
-
-                        $data[] = $dateTime->format($format);
+                        $data[] = $this->parseDateFieldValueForDisplay($propertyValue, $column);
                         break;
                     case 'title':
-                        $data[] = '<strong style="font-style: normal;">' .
-                            "<a href=\"{$url}\">{$propertyValue}</a>" .
-                        '</strong>';
+                        $data[] = '<strong style="font-style: normal;">' . "<a href=\"{$url}\">{$propertyValue}</a>" . '</strong>';
                         break;
                     case 'file':
                         $data[] = $this->parseImageFieldValueForDisplay($propertyValue);
                         break;
+                    case 'grid':
+                        $data[] = $this->parseGridField(
+                            $column,
+                            (int) $entryModel->getProperty('entry_id'),
+                            $property
+                        );
+                        break;
                     default:
-                        $charCount = strlen($propertyValue);
-
-                        if ($charCount > 100) {
-                            $propertyValue = substr($propertyValue, 0, 97) . '...';
-                        }
-
-                        $data[] = $propertyValue;
+                        $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue);
                 }
             }
 
-            $tableData[] = array_merge($data, [[
-                'name' => "entry[{$channelModel->getProperty('entry_id')}]",
-                'value' => 'selected',
-            ]]);
+            $tableData[] = array_merge($data, [['name' => "entry[{$entryModel->getProperty('entry_id')}]", 'value' => 'selected',]]);
         }
 
         $table->setData($tableData);
@@ -513,6 +448,7 @@ class Visor_mcp
 
     /**
      * Gets channels selects array
+     *
      * @return array
      */
     private function getChannelSelects()
@@ -522,9 +458,7 @@ class Visor_mcp
 
         $channelQuery->order('channel_title', 'asc');
 
-        $channelSelects = [
-            '' => '--',
-        ];
+        $channelSelects = ['' => '--',];
 
         foreach ($channelQuery->all() as $model) {
             /** @var ChannelModel $model */
@@ -542,16 +476,14 @@ class Visor_mcp
         /** @var Alert $alert */
         $alert = $this->alertCollection->make('visor');
 
-        $entryIds = (array) $this->inputService->post('entry');
+        $entryIds = (array)$this->inputService->post('entry');
 
-        if (! $entryIds) {
+        if (!$entryIds) {
             $alert->asIssue();
             $alert->withTitle(lang('error'));
             $alert->addToBody(lang('noEntriesSelected'));
             $alert->defer();
-            $this->eeFunctions->redirect(
-                $this->inputService->post('redirect') ?: $this->getFullUrlToPage()
-            );
+            $this->eeFunctions->redirect($this->inputService->post('redirect') ?: $this->getFullUrlToPage());
             exit();
         }
 
@@ -564,9 +496,7 @@ class Visor_mcp
         $alert->withTitle(lang('success'));
         $alert->addToBody(lang('selectedEntriesDeleted'));
         $alert->defer();
-        $this->eeFunctions->redirect(
-            $this->inputService->post('redirect') ?: $this->getFullUrlToPage()
-        );
+        $this->eeFunctions->redirect($this->inputService->post('redirect') ?: $this->getFullUrlToPage());
         exit();
     }
 
@@ -575,6 +505,7 @@ class Visor_mcp
 
     /**
      * Gets field ID from field property name
+     *
      * @param $property
      * @return mixed|null
      */
@@ -588,34 +519,48 @@ class Visor_mcp
 
             foreach ($fieldsQueryBuilder->all() as $channelField) {
                 /** @var ChannelField $channelField */
-                $id = (int) $channelField->getProperty('field_id');
+                $id = (int)$channelField->getProperty('field_id');
                 $name = $channelField->getProperty('field_name');
                 $this->fieldNameToIdMap[$name] = $id;
             }
         }
 
-        return isset($this->fieldNameToIdMap[$property]) ?
-            $this->fieldNameToIdMap[$property] :
-            null;
+        return isset($this->fieldNameToIdMap[$property]) ? $this->fieldNameToIdMap[$property] : null;
+    }
+
+    /**
+     * @param $propertyValue
+     * @param $column
+     * @return string
+     */
+    private function parseDateFieldValueForDisplay($propertyValue, $column)
+    {
+        $format = isset($column['dateFormat']) ? $column['dateFormat'] : 'n/j/Y g:i A';
+
+        $dateTime = new \DateTime();
+        $dateTime->setTimestamp($propertyValue);
+
+        return $dateTime->format($format);
     }
 
     /**
      * Parses image field value for display
+     *
      * @param string $propertyValue
      * @return string
      */
     private function parseImageFieldValueForDisplay($propertyValue)
     {
-        if (! $propertyValue) {
+        if (!$propertyValue) {
             return '';
         }
 
         preg_match('/{filedir_(\d+)}(.*)/', $propertyValue, $matches);
 
-        $fileDirId = isset($matches[1]) ? ((int) $matches[1]) : null;
+        $fileDirId = isset($matches[1]) ? ((int)$matches[1]) : null;
         $fileName = isset($matches[2]) ? $matches[2] : null;
 
-        if (! $fileDirId ||  ! $fileName) {
+        if (!$fileDirId || !$fileName) {
             return '';
         }
 
@@ -627,7 +572,7 @@ class Visor_mcp
         /** @var FileModel $fileModel */
         $fileModel = $fileQuery->first();
 
-        if (! $fileModel) {
+        if (!$fileModel) {
             return '';
         }
 
@@ -642,5 +587,133 @@ class Visor_mcp
         $str .= '</div>';
 
         return $str;
+    }
+
+    /**
+     * @param $propertyValue
+     * @return string
+     */
+    private function parseDefaultFieldValueForDisplay($propertyValue)
+    {
+        $charCount = strlen($propertyValue);
+
+        if ($charCount > 100) {
+            $propertyValue = substr($propertyValue, 0, 97) . '...';
+        }
+
+        return $propertyValue;
+    }
+
+    /**
+     * Parses a grid field
+     * @param array $column
+     * @param int $entryId
+     * @param string $fieldName
+     * @return string
+     */
+    private function parseGridField($column, $entryId, $fieldName)
+    {
+        if (! isset($column['gridItems'])) {
+            return '';
+        }
+
+        $gridItems = $column['gridItems'];
+
+        /** @var Table $table */
+        $table = ee('CP/Table');
+
+        $table->setNoResultsText('noRows');
+
+        $table->setColumns($gridItems);
+
+        $fieldId = $this->getFieldId($fieldName);
+
+        $gridFieldQuery = $this->queryBuilder->where('entry_id', $entryId)
+            ->order_by('row_order', 'asc')
+            ->get("channel_grid_field_{$fieldId}")
+            ->result();
+
+        $tableData = [];
+
+        // We need to go through each grid row
+        foreach ($gridFieldQuery as $gridRow) {
+            $data = [];
+
+            // And we need to go through each grid column
+            foreach ($gridItems as $gridColumn) {
+                $property = isset($gridColumn['modelProperty']) ?
+                    $gridColumn['modelProperty'] :
+                    null;
+
+                if (! $property) {
+                    $data[] = '';
+                    continue;
+                }
+
+                $formatting = isset($gridColumn['propertyFormatting']) ?
+                    $gridColumn['propertyFormatting'] :
+                    null;
+
+                $colId = $this->getGridColId($fieldId, $property);
+
+                if (! $colId) {
+                    $data[] = '';
+                    continue;
+                }
+
+                $propertyValue = isset($gridRow->{"col_id_{$colId}"}) ?
+                    $gridRow->{"col_id_{$colId}"} :
+                    null;
+
+                if (! $propertyValue) {
+                    $data[] = '';
+                    continue;
+                }
+
+                switch ($formatting) {
+                    case 'date':
+                        $data[] = $this->parseDateFieldValueForDisplay($propertyValue, $gridColumn);
+                        break;
+                    case 'file':
+                        $data[] = $this->parseImageFieldValueForDisplay($propertyValue);
+                        break;
+                    default:
+                        $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue);
+                }
+            }
+
+            $tableData[] = $data;
+        }
+
+        $table->setData($tableData);
+
+        $returnString = '<div class="visor-grid-wrapper">';
+
+        $returnString .= $this->viewFactory->make('ee:_shared/table')
+            ->render($table->viewData());
+
+        $returnString .= '</div>';
+
+        return $returnString;
+    }
+
+    /**
+     * @param $fieldId
+     * @param $colName
+     * @return int
+     */
+    private function getGridColId($fieldId, $colName)
+    {
+        $query = $this->queryBuilder->select('col_id')
+            ->where('field_id', $fieldId)
+            ->where('col_name', $colName)
+            ->get('grid_columns')
+            ->row();
+
+        if (! isset($query->col_id)) {
+            return 0;
+        }
+
+        return (int) $query->col_id;
     }
 }

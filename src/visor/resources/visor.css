@@ -1,5 +1,5 @@
 .VisorMaster td {
-    max-width: 220px;
+    max-width: 300px;
     min-width: 100px;
     white-space: normal;
 }
@@ -64,4 +64,8 @@
 .filters__remove-filter {
     padding-bottom: 2px !important;
     padding-top: 1px !important;
+}
+
+.visor-grid-wrapper {
+    min-width: 300px;
 }
