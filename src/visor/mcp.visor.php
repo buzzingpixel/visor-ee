@@ -558,7 +558,7 @@ class Visor_mcp
      */
     private function parseImageFieldValueForDisplay($propertyValue)
     {
-        if (!$propertyValue) {
+        if (! $propertyValue) {
             return '';
         }
 
@@ -585,11 +585,15 @@ class Visor_mcp
 
         $str = '<div class="visor-file-wrapper">';
 
+        $str .= "<a href=\"{$fileModel->getAbsoluteURL()}\" target=\"_blank\">";
+
         if ($fileModel->isImage()) {
             $str .= "<img src=\"{$fileModel->getThumbnailUrl()}\" alt=\"{$fileModel->getProperty('title')}\">";
         } else {
             $str .= $fileName;
         }
+
+        $str .= '</a>';
 
         $str .= '</div>';
 
