@@ -43,6 +43,9 @@ class Visor_mcp
     /** @var EE_Functions $eeFunctions */
     private $eeFunctions;
 
+    /** @var \EE_Config $eeConfigService */
+    private $eeConfigService;
+
     private static $defaultColumns = [
         [
             'label' => 'id',
@@ -94,6 +97,7 @@ class Visor_mcp
         $this->cpUrlFactory = ee('CP/URL');
         $this->alertCollection = ee('CP/Alert');
         $this->eeFunctions = ee()->functions;
+        $this->eeConfigService = ee()->config;
     }
 
     /**
@@ -352,7 +356,18 @@ class Visor_mcp
 
         $table->setNoResultsText('noEntries');
 
-        $table->setColumns(array_merge(self::$defaultColumns, [
+        $filters = $this->getFiltersFromInput();
+
+        $channel = null;
+
+        if (count($filters['channels']) === 1) {
+            $channel = $filters['channels'][0];
+        }
+
+        $columnConfig = $this->eeConfigService->item('channelConfig', 'visor') ?: [];
+        $columnConfig = isset($columnConfig[$channel]) ? $columnConfig[$channel] : self::$defaultColumns;
+
+        $table->setColumns(array_merge($columnConfig, [
             [
                 'type' => Table::COL_CHECKBOX,
             ],
@@ -390,7 +405,18 @@ class Visor_mcp
 
             $data = [];
 
-            foreach (self::$defaultColumns as $column) {
+            $filters = $this->getFiltersFromInput();
+
+            $channel = null;
+
+            if (count($filters['channels']) === 1) {
+                $channel = $filters['channels'][0];
+            }
+
+            $columnConfig = $this->eeConfigService->item('channelConfig', 'visor') ?: [];
+            $columnConfig = isset($columnConfig[$channel]) ? $columnConfig[$channel] : self::$defaultColumns;
+
+            foreach ($columnConfig as $column) {
                 $property = isset($column['modelProperty']) ?
                     $column['modelProperty'] :
                     null;
