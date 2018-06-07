@@ -19,4 +19,5 @@ $lang = [
     'noEntriesSelected' => 'You did not select any entries',
     'visor' => 'Visor',
     'viewAll' => 'View All',
+    'filterChannels' => 'Filter channels...'
 ];

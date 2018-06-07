@@ -156,6 +156,10 @@ class Visor_ext
 
         $submenu = $menu->addSubmenu($title);
 
+        if ($channels->count() > 5) {
+            $submenu->withFilter(lang('filterChannels'));
+        }
+
         $submenu->addItem(
             lang('viewAll'),
             $this->cpUrlFactory->make('addons/settings/visor')
