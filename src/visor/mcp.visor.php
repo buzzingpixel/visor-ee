@@ -448,7 +448,7 @@ class Visor_mcp
                         );
                         break;
                     default:
-                        $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue);
+                        $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue, $column);
                 }
             }
 
@@ -609,10 +609,17 @@ class Visor_mcp
 
     /**
      * @param $propertyValue
+     * @param array $column
      * @return string
      */
-    private function parseDefaultFieldValueForDisplay($propertyValue)
+    private function parseDefaultFieldValueForDisplay($propertyValue, $column)
     {
+        $type = isset($column['type']) ? $column['type'] : Table::COL_TEXT;
+
+        if ($type !== Table::COL_TEXT) {
+            return $propertyValue;
+        }
+
         $propertyValue = strip_tags($propertyValue);
 
         $charCount = strlen($propertyValue);
@@ -706,7 +713,7 @@ class Visor_mcp
                         $data[] = $this->parseImageFieldValueForDisplay($propertyValue);
                         break;
                     default:
-                        $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue);
+                        $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue, $gridColumn);
                 }
             }
 
@@ -820,7 +827,7 @@ class Visor_mcp
                         $data[] = $this->parseImageFieldValueForDisplay($propertyValue);
                         break;
                     default:
-                        $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue);
+                        $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue, $matrixColumn);
                 }
             }
 
