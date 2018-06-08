@@ -105,31 +105,31 @@ class Visor_ext
 
         // If get param present and this is a publish entry page
         if ((
-                $visorReturn &&
                 $this->uriService->segment(2) === 'publish' &&
                 $this->uriService->segment(3) === 'edit' &&
                 $this->uriService->segment(4) === 'entry'
             ) ||
             (
-                $visorReturn &&
                 $this->uriService->segment(2) === 'publish' &&
                 $this->uriService->segment(3) === 'create' &&
                 (int) $this->uriService->segment(4)
             )
         ) {
-            // Place Save and return to tree button?
-            // Set the return data in a cookie
-            $this->inputService->set_cookie(
-                'visorReturn',
-                'true',
-                31557600
-            );
+            if ($visorReturn) {
+                // Place Save and return to tree button?
+                // Set the return data in a cookie
+                $this->inputService->set_cookie(
+                    'visorReturn',
+                    'true',
+                    31557600
+                );
 
-            $this->inputService->set_cookie(
-                'visorFilters',
-                json_encode($visorFilters),
-                31557600
-            );
+                $this->inputService->set_cookie(
+                    'visorFilters',
+                    json_encode($visorFilters),
+                    31557600
+                );
+            }
 
             // Stop processing
             return;
