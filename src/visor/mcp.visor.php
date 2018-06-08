@@ -17,6 +17,7 @@ use EllisLab\ExpressionEngine\Service\Alert\AlertCollection;
 use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
 use EllisLab\ExpressionEngine\Model\Channel\Channel as ChannelModel;
 use EllisLab\ExpressionEngine\Service\Database\Query as QueryBuilder;
+use EllisLab\ExpressionEngine\Model\Category\Category as CategoryModel;
 use EllisLab\ExpressionEngine\Service\Model\Collection as ModelCollection;
 use EllisLab\ExpressionEngine\Model\Channel\ChannelEntry as ChannelEntryModel;
 use EllisLab\ExpressionEngine\Service\Model\Query\Builder as ModelQueryBuilder;
@@ -524,6 +525,9 @@ class Visor_mcp
                             $property
                         );
                         break;
+                    case 'categories':
+                        $data[] = $this->parseCategoryField($entryModel);
+                        break;
                     default:
                         $data[] = $this->parseDefaultFieldValueForDisplay(
                             $propertyValue,
@@ -983,5 +987,38 @@ class Visor_mcp
         }
 
         return (int) $query->col_id;
+    }
+
+    /**
+     * @param ChannelEntryModel $entryModel
+     * @return string
+     */
+    private function parseCategoryField(ChannelEntryModel $entryModel)
+    {
+        $categoryCollection = $entryModel->Categories;
+
+        $count = $categoryCollection->count();
+
+        if (! $count) {
+            return '';
+        }
+
+        $i = 1;
+
+        $str = '';
+
+        foreach ($categoryCollection as $categoryModel) {
+            /** @var CategoryModel $categoryModel */
+
+            $str .= $categoryModel->getProperty('cat_name');
+
+            if ($i !== $count) {
+                $str .= ' • ';
+            }
+
+            $i++;
+        }
+
+        return $str;
     }
 }
