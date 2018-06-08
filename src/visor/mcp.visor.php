@@ -584,7 +584,7 @@ class Visor_mcp
         /** @var Alert $alert */
         $alert = $this->alertCollection->make('visor');
 
-        $entryIds = (array)$this->inputService->post('entry');
+        $entryIds = (array) $this->inputService->post('entry');
 
         if (! $entryIds) {
             $alert->asIssue();
@@ -597,7 +597,24 @@ class Visor_mcp
 
         /** @var ModelQueryBuilder $channelModelBuilder */
         $channelModelBuilder = $this->modelFacade->get('ChannelEntry');
+
         $channelModelBuilder->filter('entry_id', 'IN', array_keys($entryIds));
+
+        if (! $this->permissionService->has('can_delete_self_entries')) {
+            $channelModelBuilder->filter(
+                'author_id',
+                '!=',
+                $this->eeSession->userdata('member_id')
+            );
+        }
+
+        if (! $this->permissionService->has('can_delete_all_entries')) {
+            $channelModelBuilder->filter(
+                'author_id',
+                $this->eeSession->userdata('member_id')
+            );
+        }
+
         $channelModelBuilder->delete();
 
         $alert->asSuccess();
