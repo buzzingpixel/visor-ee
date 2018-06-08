@@ -20,6 +20,7 @@ use EllisLab\ExpressionEngine\Service\Database\Query as QueryBuilder;
 use EllisLab\ExpressionEngine\Service\Model\Collection as ModelCollection;
 use EllisLab\ExpressionEngine\Model\Channel\ChannelEntry as ChannelEntryModel;
 use EllisLab\ExpressionEngine\Service\Model\Query\Builder as ModelQueryBuilder;
+use EllisLab\ExpressionEngine\Service\Permission\Permission as PermissionService;
 
 /**
  * Class Visor_mcp
@@ -51,6 +52,12 @@ class Visor_mcp
 
     /** @var QueryBuilder $queryBuilder */
     private $queryBuilder;
+
+    /** @var \EE_Session */
+    private $eeSession;
+
+    /** @var PermissionService $permissionService */
+    private $permissionService;
 
     private static $defaultColumns = [
         [
@@ -105,6 +112,8 @@ class Visor_mcp
         $this->eeFunctions = ee()->functions;
         $this->eeConfigService = ee()->config;
         $this->queryBuilder = ee('db');
+        $this->eeSession = ee()->session;
+        $this->permissionService = ee('Permission');
     }
 
     /**
@@ -228,6 +237,12 @@ class Visor_mcp
 
         $filters = $this->getFiltersFromInput();
 
+        $channelQuery->filter(
+            'channel_id',
+            'IN',
+            array_keys($this->eeSession->userdata('assigned_channels'))
+        );
+
         if ($filters['channels']) {
             $channelQuery->filter('channel_name', 'IN', $filters['channels']);
         }
@@ -320,6 +335,27 @@ class Visor_mcp
     {
         /** @var ModelQueryBuilder $channelModelBuilder */
         $channelModelBuilder = $this->modelFacade->get('ChannelEntry');
+
+        $channelModelBuilder->filter(
+            'channel_id',
+            'IN',
+            array_keys($this->eeSession->userdata('assigned_channels'))
+        );
+
+        if (! $this->permissionService->has('can_edit_self_entries')) {
+            $channelModelBuilder->filter(
+                'author_id',
+                '!=',
+                $this->eeSession->userdata('member_id')
+            );
+        }
+
+        if (! $this->permissionService->has('can_edit_other_entries')) {
+            $channelModelBuilder->filter(
+                'author_id',
+                $this->eeSession->userdata('member_id')
+            );
+        }
 
         $filters = $this->getFiltersFromInput();
 
@@ -521,6 +557,12 @@ class Visor_mcp
     {
         /** @var ModelQueryBuilder $channelQuery */
         $channelQuery = $this->modelFacade->get('Channel');
+
+        $channelQuery->filter(
+            'channel_id',
+            'IN',
+            array_keys($this->eeSession->userdata('assigned_channels'))
+        );
 
         $channelQuery->order('channel_title', 'asc');
 
