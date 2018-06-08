@@ -118,7 +118,6 @@ class Visor_mcp
 
     /**
      * Displays the index page
-     *
      * @return array
      */
     public function index()
@@ -187,7 +186,6 @@ class Visor_mcp
 
     /**
      * Gets the filters
-     *
      * @return array(
      *     'channels' => array(),
      *     'standard' => array(),
@@ -226,11 +224,14 @@ class Visor_mcp
 
     /**
      * Gets filtered channel links
-     *
      * @return array
      */
     private function getFilteredChannelLinks()
     {
+        if (! $this->permissionService->has('can_create_entries')) {
+            return [];
+        }
+
         $channelQuery = $this->modelFacade->get('Channel');
 
         $channelQuery->order('channel_title', 'asc');
@@ -272,7 +273,6 @@ class Visor_mcp
 
     /**
      * Gets channel collection
-     *
      * @return ModelCollection
      */
     private function getEntryModelCollection()
@@ -290,7 +290,6 @@ class Visor_mcp
 
     /**
      * Gets URL
-     *
      * @return \EllisLab\ExpressionEngine\Library\CP\URL
      */
     private function getFullUrlToPage()
@@ -309,7 +308,6 @@ class Visor_mcp
 
     /**
      * Gets pagination
-     *
      * @return string
      */
     private function getPagination()
@@ -328,7 +326,6 @@ class Visor_mcp
 
     /**
      * Gets the entry model builder
-     *
      * @return ModelQueryBuilder
      */
     private function getEntryModelBuilder()
@@ -386,7 +383,6 @@ class Visor_mcp
 
     /**
      * Creates the table
-     *
      * @return Table
      */
     private function createTable()
@@ -416,7 +412,6 @@ class Visor_mcp
 
     /**
      * Populates the table data
-     *
      * @param Table $table
      * @param ModelCollection $entryModelCollection
      * @return Table
@@ -550,7 +545,6 @@ class Visor_mcp
 
     /**
      * Gets channels selects array
-     *
      * @return array
      */
     private function getChannelSelects()
@@ -630,7 +624,6 @@ class Visor_mcp
 
     /**
      * Gets field ID from field property name
-     *
      * @param $property
      * @return mixed|null
      */
@@ -670,7 +663,6 @@ class Visor_mcp
 
     /**
      * Parses image field value for display
-     *
      * @param string $propertyValue
      * @return string
      */
