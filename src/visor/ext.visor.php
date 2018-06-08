@@ -11,6 +11,7 @@ use EllisLab\ExpressionEngine\Service\Model\Collection;
 use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
 use EllisLab\ExpressionEngine\Model\Channel\Channel as ChannelModel;
 use EllisLab\ExpressionEngine\Service\CustomMenu\Menu as CustomMenuService;
+use EllisLab\ExpressionEngine\Service\Model\Query\Builder as ModelQueryBuilder;
 
 /**
  * Class Visor_mcp
@@ -38,6 +39,12 @@ class Visor_ext
     /** @var \EE_Config $eeConfigService */
     private $eeConfigService;
 
+    /** @var \EE_Lang $lang */
+    private $lang;
+
+    /** @var \EE_Session */
+    private $eeSession;
+
     public function __construct()
     {
         $this->inputService = ee()->input;
@@ -46,6 +53,8 @@ class Visor_ext
         $this->eeFunctions = ee()->functions;
         $this->modelFacade = ee('Model');
         $this->eeConfigService = ee()->config;
+        $this->lang = ee()->lang;
+        $this->eeSession = ee()->session;
     }
 
     /**
@@ -61,7 +70,10 @@ class Visor_ext
 
         // Get cookie
         $visorReturnCookie = $this->inputService->cookie('visorReturn');
-        $visorFiltersCookie = json_decode($this->inputService->cookie('visorFilters'), true);
+        $visorFiltersCookie = json_decode(
+            $this->inputService->cookie('visorFilters'),
+            true
+        );
 
         if ($visorReturnCookie &&
             $this->uriService->segment(2) === 'publish' &&
@@ -134,29 +146,59 @@ class Visor_ext
      */
     public function cp_custom_menu(CustomMenuService $menu)
     {
-        ee()->lang->loadfile('visor');
+        $this->lang->loadfile('visor');
 
+        /** @var ModelQueryBuilder $channelQuery */
         $channelQuery = $this->modelFacade->get('Channel');
+
+        $channelQuery->filter(
+            'channel_id',
+            'IN',
+            array_keys($this->eeSession->userdata('assigned_channels'))
+        );
 
         $channelQuery->order('channel_title', 'asc');
 
         /** @var Collection $channels */
         $channels = $channelQuery->all();
 
-        $title = $this->eeConfigService->item('menuTitle', 'visor') ?: lang('visor');
+        $channelsCount = $channels->count();
 
-        if ($channels->count() < 2) {
-            $menu->addItem(
-                $title,
-                $this->cpUrlFactory->make('addons/settings/visor')
-            );
+        if ($channelsCount < 1) {
+            return;
+        }
+
+        $title = $this->eeConfigService->item('menuTitle', 'visor') ?:
+            lang('visor');
+
+        if ($channelsCount < 2) {
+            foreach ($channels as $channel) {
+                $menu->addItem(
+                    $title,
+                    $this->cpUrlFactory
+                        ->make(
+                            'addons/settings/visor',
+                            [
+                                'filter' => [
+                                    uniqid('', false) => [
+                                        'type' => 'channel',
+                                        'operator' => 'is',
+                                        'value' => $channel->getProperty(
+                                            'channel_name'
+                                        ),
+                                    ],
+                                ],
+                            ]
+                        )
+                );
+            }
 
             return;
         }
 
         $submenu = $menu->addSubmenu($title);
 
-        if ($channels->count() > 5) {
+        if ($channelsCount > 5) {
             $submenu->withFilter(lang('filterChannels'));
         }
 
@@ -178,7 +220,9 @@ class Visor_ext
                                 uniqid('', false) => [
                                     'type' => 'channel',
                                     'operator' => 'is',
-                                    'value' => $channel->getProperty('channel_name'),
+                                    'value' => $channel->getProperty(
+                                        'channel_name'
+                                    ),
                                 ],
                             ],
                         ]

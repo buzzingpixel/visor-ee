@@ -142,7 +142,20 @@ class Visor_mcp
         $viewBody .= file_get_contents(VISOR_PATH . '/resources/FAB.model.js');
         $viewBody .= '</script>';
 
-        $viewBody .= $this->viewFactory->make('visor:Visor')->render(['viewFactory' => $this->viewFactory, 'baseUrl' => $this->cpUrlFactory->make('addons/settings/visor')->compile(), 'fullUrl' => $this->getFullUrlToPage(), 'filters' => $filters, 'channelSelects' => $this->getChannelSelects(), 'filteredChannelLinks' => $this->getFilteredChannelLinks(), 'pagination' => $this->getPagination(), 'tableViewData' => $this->populateTableData($this->createTable(), $this->getEntryModelCollection())->viewData(),]);
+        $viewBody .= $this->viewFactory->make('visor:Visor')
+            ->render([
+                'viewFactory' => $this->viewFactory,
+                'baseUrl' => $this->cpUrlFactory->make('addons/settings/visor')->compile(),
+                'fullUrl' => $this->getFullUrlToPage(),
+                'filters' => $filters,
+                'channelSelects' => $this->getChannelSelects(),
+                'filteredChannelLinks' => $this->getFilteredChannelLinks(),
+                'pagination' => $this->getPagination(),
+                'tableViewData' => $this->populateTableData(
+                    $this->createTable(),
+                    $this->getEntryModelCollection()
+                )
+                ->viewData(),]);
 
         $controllersDirectory = new \DirectoryIterator(VISOR_PATH . '/resources/controllers');
 
@@ -227,7 +240,16 @@ class Visor_mcp
 
         foreach ($channels as $channel) {
             /** @var ChannelModel $channel */
-            $links[] = ['title' => $channel->getProperty('channel_title'), 'link' => $this->cpUrlFactory->make("publish/create/{$channel->getProperty('channel_id')}", ['visorReturn' => 'true', 'visorFilters' => $visorFilters,])->compile()];
+            $links[] = [
+                'title' => $channel->getProperty('channel_title'),
+                'link' => $this->cpUrlFactory->make(
+                    "publish/create/{$channel->getProperty('channel_id')}",
+                    [
+                        'visorReturn' => 'true',
+                        'visorFilters' => $visorFilters,
+                        ]
+                )
+                ->compile()];
         }
 
         return $links;
@@ -261,7 +283,10 @@ class Visor_mcp
         $url = $this->cpUrlFactory->make('addons/settings/visor');
 
         if ($this->inputService->get('filter')) {
-            $url->setQueryStringVariable('filter', $this->inputService->get('filter'));
+            $url->setQueryStringVariable(
+                'filter',
+                $this->inputService->get('filter')
+            );
         }
 
         return $url;
@@ -300,12 +325,20 @@ class Visor_mcp
 
         if ($filters['channels']) {
             $channelModelBuilder->with('Channel');
-            $channelModelBuilder->filter('Channel.channel_name', 'IN', $filters['channels']);
+            $channelModelBuilder->filter(
+                'Channel.channel_name',
+                'IN',
+                $filters['channels']
+            );
         }
 
         foreach ($filters['standard'] as $filter) {
             if ($filter['operator'] === 'contains') {
-                $channelModelBuilder->filter($filter['type'], 'LIKE', '%' . $filter['value'] . '%');
+                $channelModelBuilder->filter(
+                    $filter['type'],
+                    'LIKE',
+                    '%' . $filter['value'] . '%'
+                );
                 continue;
             }
 
@@ -336,7 +369,9 @@ class Visor_mcp
         }
 
         $columnConfig = $this->eeConfigService->item('channelConfig', 'visor') ?: [];
-        $columnConfig = isset($columnConfig[$channel]) ? $columnConfig[$channel] : self::$defaultColumns;
+        $columnConfig = isset($columnConfig[$channel]) ?
+            $columnConfig[$channel] :
+            self::$defaultColumns;
 
         $table->setColumns(array_merge($columnConfig, [['type' => Table::COL_CHECKBOX,],]));
 
@@ -380,10 +415,14 @@ class Visor_mcp
             }
 
             $columnConfig = $this->eeConfigService->item('channelConfig', 'visor') ?: [];
-            $columnConfig = isset($columnConfig[$channel]) ? $columnConfig[$channel] : self::$defaultColumns;
+            $columnConfig = isset($columnConfig[$channel]) ?
+                $columnConfig[$channel] :
+                self::$defaultColumns;
 
             foreach ($columnConfig as $column) {
-                $property = isset($column['modelProperty']) ? $column['modelProperty'] : null;
+                $property = isset($column['modelProperty']) ?
+                    $column['modelProperty'] :
+                    null;
 
                 $parentCheck = explode('.', $property);
                 $parentProperty = null;
@@ -406,7 +445,9 @@ class Visor_mcp
                     continue;
                 }
 
-                $formatting = isset($column['propertyFormatting']) ? $column['propertyFormatting'] : null;
+                $formatting = isset($column['propertyFormatting']) ?
+                    $column['propertyFormatting'] :
+                    null;
 
                 $propertyValue = null;
 
@@ -425,13 +466,18 @@ class Visor_mcp
 
                 switch ($formatting) {
                     case 'date':
-                        $data[] = $this->parseDateFieldValueForDisplay($propertyValue, $column);
+                        $data[] = $this->parseDateFieldValueForDisplay(
+                            $propertyValue,
+                            $column
+                        );
                         break;
                     case 'title':
                         $data[] = '<strong style="font-style: normal; white-space: nowrap;">' . "<a href=\"{$url}\">{$propertyValue}</a>" . '</strong>';
                         break;
                     case 'file':
-                        $data[] = $this->parseImageFieldValueForDisplay($propertyValue);
+                        $data[] = $this->parseImageFieldValueForDisplay(
+                            $propertyValue
+                        );
                         break;
                     case 'grid':
                         $data[] = $this->parseGridField(
@@ -448,11 +494,17 @@ class Visor_mcp
                         );
                         break;
                     default:
-                        $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue, $column);
+                        $data[] = $this->parseDefaultFieldValueForDisplay(
+                            $propertyValue,
+                            $column
+                        );
                 }
             }
 
-            $tableData[] = array_merge($data, [['name' => "entry[{$entryModel->getProperty('entry_id')}]", 'value' => 'selected',]]);
+            $tableData[] = array_merge($data, [[
+                'name' => "entry[{$entryModel->getProperty('entry_id')}]",
+                'value' => 'selected',
+            ]]);
         }
 
         $table->setData($tableData);
@@ -707,13 +759,21 @@ class Visor_mcp
 
                 switch ($formatting) {
                     case 'date':
-                        $data[] = $this->parseDateFieldValueForDisplay($propertyValue, $gridColumn);
+                        $data[] = $this->parseDateFieldValueForDisplay(
+                            $propertyValue,
+                            $gridColumn
+                        );
                         break;
                     case 'file':
-                        $data[] = $this->parseImageFieldValueForDisplay($propertyValue);
+                        $data[] = $this->parseImageFieldValueForDisplay(
+                            $propertyValue
+                        );
                         break;
                     default:
-                        $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue, $gridColumn);
+                        $data[] = $this->parseDefaultFieldValueForDisplay(
+                            $propertyValue,
+                            $gridColumn
+                        );
                 }
             }
 
@@ -821,13 +881,21 @@ class Visor_mcp
 
                 switch ($formatting) {
                     case 'date':
-                        $data[] = $this->parseDateFieldValueForDisplay($propertyValue, $matrixColumn);
+                        $data[] = $this->parseDateFieldValueForDisplay(
+                            $propertyValue,
+                            $matrixColumn
+                        );
                         break;
                     case 'file':
-                        $data[] = $this->parseImageFieldValueForDisplay($propertyValue);
+                        $data[] = $this->parseImageFieldValueForDisplay(
+                            $propertyValue
+                        );
                         break;
                     default:
-                        $data[] = $this->parseDefaultFieldValueForDisplay($propertyValue, $matrixColumn);
+                        $data[] = $this->parseDefaultFieldValueForDisplay(
+                            $propertyValue,
+                            $matrixColumn
+                        );
                 }
             }
 
