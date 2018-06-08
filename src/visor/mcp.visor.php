@@ -18,6 +18,7 @@ use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
 use EllisLab\ExpressionEngine\Model\Channel\Channel as ChannelModel;
 use EllisLab\ExpressionEngine\Service\Database\Query as QueryBuilder;
 use EllisLab\ExpressionEngine\Model\Category\Category as CategoryModel;
+use EllisLab\ExpressionEngine\Library\Data\Collection as DataCollection;
 use EllisLab\ExpressionEngine\Service\Model\Collection as ModelCollection;
 use EllisLab\ExpressionEngine\Model\Channel\ChannelEntry as ChannelEntryModel;
 use EllisLab\ExpressionEngine\Service\Model\Query\Builder as ModelQueryBuilder;
@@ -264,7 +265,7 @@ class Visor_mcp
                     [
                         'visorReturn' => 'true',
                         'visorFilters' => $visorFilters,
-                        ]
+                    ]
                 )
                 ->compile()];
         }
@@ -527,6 +528,12 @@ class Visor_mcp
                         break;
                     case 'categories':
                         $data[] = $this->parseCategoryField($entryModel);
+                        break;
+                    case 'relationship':
+                        $data[] = $this->parseRelationshipField(
+                            $entryModel,
+                            $column
+                        );
                         break;
                     default:
                         $data[] = $this->parseDefaultFieldValueForDisplay(
@@ -1017,6 +1024,56 @@ class Visor_mcp
             }
 
             $i++;
+        }
+
+        return $str;
+    }
+
+    /**
+     * @param ChannelEntryModel $entryModel
+     * @param array $config
+     * @return string
+     */
+    private function parseRelationshipField(
+        ChannelEntryModel $entryModel,
+        $config
+    ) {
+        $fieldRels = new DataCollection(
+            $this->queryBuilder->select('child_id')
+                ->where('field_id', $this->getFieldId($config['modelProperty']))
+                ->where('parent_id', $entryModel->getProperty('entry_id'))
+                ->get('relationships')
+                ->result()
+        );
+
+        $children = $entryModel->Children->filter(
+            'entry_id',
+            'IN',
+            $fieldRels->pluck('child_id')
+        );
+
+        $visorFilters = $this->inputService->get('filter') ?: [];
+
+        $str = '';
+
+        foreach ($children as $child) {
+            /** @var ChannelEntryModel $child */
+            $url = $this->cpUrlFactory
+                ->make(
+                    "publish/edit/entry/{$child->getProperty('entry_id')}",
+                    [
+                        'visorReturn' => 'true',
+                        'visorFilters' => $visorFilters,
+                    ]
+                )
+                ->compile();
+
+            $thisStr = '<div class="visor-relationship-link">';
+            $thisStr .= "<a href=\"{$url}\">";
+            $thisStr .= $child->getProperty('title');
+            $thisStr .= '</a></div>';
+
+            $str .= $thisStr;
         }
 
         return $str;
