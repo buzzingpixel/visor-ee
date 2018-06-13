@@ -68,6 +68,7 @@ class Visor_mcp
             'sort' => false,
             'type' => Table::COL_ID,
             'modelProperty' => 'entry_id',
+            'filter' => true,
         ],
         [
             'label' => 'title',
@@ -76,6 +77,15 @@ class Visor_mcp
             'type' => Table::COL_TEXT,
             'modelProperty' => 'title',
             'propertyFormatting' => 'title',
+            'filter' => true,
+        ],
+        [
+            'label' => 'url_title',
+            'encode' => false,
+            'sort' => false,
+            'type' => Table::COL_TEXT,
+            'modelProperty' => 'url_title',
+            'filter' => true,
         ],
         [
             'label' => 'channel',
@@ -83,6 +93,7 @@ class Visor_mcp
             'sort' => false,
             'type' => Table::COL_TEXT,
             'modelProperty' => 'Channel.channel_title',
+            'filter' => true,
         ],
         [
             'label' => 'date',
@@ -98,6 +109,7 @@ class Visor_mcp
             'sort' => false,
             'type' => Table::COL_STATUS,
             'modelProperty' => 'status',
+            'filter' => true,
         ],
     ];
 
@@ -161,6 +173,7 @@ class Visor_mcp
                 'channelSelects' => $this->getChannelSelects(),
                 'filteredChannelLinks' => $this->getFilteredChannelLinks(),
                 'pagination' => $this->getPagination(),
+                'filterTypes' => $this->getFilterTypes(),
                 'tableViewData' => $this->populateTableData(
                     $this->createTable(),
                     $this->getEntryModelCollection()
@@ -327,6 +340,26 @@ class Visor_mcp
     }
 
     /**
+     * Get column config
+     * @return array
+     */
+    private function getColumnConfig()
+    {
+        $filters = $this->getFiltersFromInput();
+
+        $channel = null;
+
+        if (count($filters['channels']) === 1) {
+            $channel = $filters['channels'][0];
+        }
+
+        $columnConfig = $this->eeConfigService->item('channelConfig', 'visor') ?: [];
+        return isset($columnConfig[$channel]) ?
+            $columnConfig[$channel] :
+            self::$defaultColumns;
+    }
+
+    /**
      * Gets the entry model builder
      * @return ModelQueryBuilder
      */
@@ -394,20 +427,14 @@ class Visor_mcp
 
         $table->setNoResultsText('noEntries');
 
-        $filters = $this->getFiltersFromInput();
-
-        $channel = null;
-
-        if (count($filters['channels']) === 1) {
-            $channel = $filters['channels'][0];
-        }
-
-        $columnConfig = $this->eeConfigService->item('channelConfig', 'visor') ?: [];
-        $columnConfig = isset($columnConfig[$channel]) ?
-            $columnConfig[$channel] :
-            self::$defaultColumns;
-
-        $table->setColumns(array_merge($columnConfig, [['type' => Table::COL_CHECKBOX,],]));
+        $table->setColumns(array_merge(
+            $this->getColumnConfig(),
+            [
+                [
+                    'type' => Table::COL_CHECKBOX,
+                ],
+            ]
+        ));
 
         return $table;
     }
@@ -439,20 +466,7 @@ class Visor_mcp
 
             $data = [];
 
-            $filters = $this->getFiltersFromInput();
-
-            $channel = null;
-
-            if (count($filters['channels']) === 1) {
-                $channel = $filters['channels'][0];
-            }
-
-            $columnConfig = $this->eeConfigService->item('channelConfig', 'visor') ?: [];
-            $columnConfig = isset($columnConfig[$channel]) ?
-                $columnConfig[$channel] :
-                self::$defaultColumns;
-
-            foreach ($columnConfig as $column) {
+            foreach ($this->getColumnConfig() as $column) {
                 $property = isset($column['modelProperty']) ?
                     $column['modelProperty'] :
                     null;
@@ -1077,5 +1091,80 @@ class Visor_mcp
         }
 
         return $str;
+    }
+
+    private function getFilterTypes()
+    {
+        $config = $this->getColumnConfig();
+
+        foreach ($config as $key => $val) {
+            if (! isset($val['modelProperty']) ||
+                $val['modelProperty'] !== 'Channel.channel_title'
+            ) {
+                continue;
+            }
+
+            unset($config[$key]);
+        }
+
+        $config = array_merge([
+            [
+                'label' => 'channel',
+                'encode' => false,
+                'sort' => false,
+                'type' => Table::COL_TEXT,
+                'modelProperty' => 'Channel.channel_title',
+                'filter' => true,
+            ],
+        ], array_values($config));
+
+        $filterTypes = [
+            [
+                'label' => '--',
+                'value' => '',
+            ],
+        ];
+
+        $filtersSet = [];
+
+        foreach ($config as $configItem) {
+            if (! isset(
+                $configItem['filter'],
+                $configItem['label'],
+                $configItem['modelProperty']
+            ) ||
+                ! $configItem['filter']
+            ) {
+                continue;
+            }
+
+            $value = $configItem['modelProperty'];
+
+            if ($value === 'Channel.channel_title') {
+                $value = 'channel';
+            }
+
+            $filtersSet[$value] = $value;
+
+            $filterTypes[] = [
+                'label' => lang($configItem['label']),
+                'value' => $value,
+            ];
+        }
+
+        $inputFilters = $this->getFiltersFromInput()['standard'];
+
+        foreach ($inputFilters as $inputFilter) {
+            if (in_array($inputFilter['type'], $filtersSet, true)) {
+                continue;
+            }
+
+            $filterTypes[] = [
+                'label' => lang($inputFilter['type']),
+                'value' => $inputFilter['type'],
+            ];
+        }
+
+        return $filterTypes;
     }
 }

@@ -8,17 +8,9 @@
 /** @var array $filteredChannelLinks */
 /** @var string $pagination */
 /** @var string $fullUrl */
+/** @var array $filterTypes */
 
 $isEE3 = version_compare(APP_VER, '4.0.0', '<');
-
-$filterTypes = [
-    '' => '--',
-    'channel' => 'Channel',
-    'entry_id' => 'Entry ID',
-    'title' => 'Title',
-    'url_title' => 'URL Title',
-    'status' => 'Status',
-];
 
 ?>
 
@@ -61,29 +53,20 @@ $filterTypes = [
                             <div class="JSPendingWrapper">
                                 <div class="filters__item-wrapper">
                                     <select name="filter[<?=$key?>][type]" class="JSFilterType">
-                                        <?php foreach ($filterTypes as $filterValue => $filterText) : ?>
+                                        <?php foreach ($filterTypes as $filterType) : ?>
                                             <option
-                                                value="<?=$filterValue?>"
-                                                <?php if ($filter['type'] === $filterValue) : ?>
+                                                value="<?=$filterType['value']?>"
+                                                <?php if ($filter['type'] === $filterType['value']) : ?>
                                                 selected
                                                 <?php endif ?>
                                             >
-                                                <?=$filterText?>
+                                                <?=$filterType['label']?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
                                 <div class="filters__item-wrapper">
                                     <select name="filter[<?=$key?>][operator]" class="JSOperator">
-                                        <option
-                                            value="is"
-                                            class="JSOperatorIs"
-                                            <?php if ($filter['operator'] === 'is') : ?>
-                                            selected
-                                            <?php endif; ?>
-                                        >
-                                            is
-                                        </option>
                                         <option
                                             value="contains"
                                             class="JSOperatorContains"
@@ -95,6 +78,15 @@ $filterTypes = [
                                             <?php endif; ?>
                                         >
                                             contains
+                                        </option>
+                                        <option
+                                            value="is"
+                                            class="JSOperatorIs"
+                                            <?php if ($filter['operator'] === 'is') : ?>
+                                            selected
+                                            <?php endif; ?>
+                                        >
+                                            is
                                         </option>
                                     </select>
                                 </div>
@@ -178,17 +170,17 @@ $filterTypes = [
         <div class="filters__pending-wrapper JSPendingWrapper">
             <div class="filters__item-wrapper">
                 <select name="filter[{{filterKey}}][type]" class="JSFilterType">
-                    <?php foreach ($filterTypes as $filterValue => $filterText) : ?>
-                        <option value="<?=$filterValue?>">
-                            <?=$filterText?>
+                    <?php foreach ($filterTypes as $filterType) : ?>
+                        <option value="<?=$filterType['value']?>">
+                            <?=$filterType['label']?>
                         </option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="filters__item-wrapper">
                 <select name="filter[{{filterKey}}][operator]" style="display: none;" class="JSOperator">
-                    <option value="is" class="JSOperatorIs">is</option>
                     <option value="contains" class="JSOperatorContains">contains</option>
+                    <option value="is" class="JSOperatorIs">is</option>
                 </select>
             </div>
             <div class="filters__item-wrapper">
