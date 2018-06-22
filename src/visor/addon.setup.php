@@ -11,6 +11,8 @@ use buzzingpixel\visor\facades\CpUrlFacade;
 use buzzingpixel\visor\facades\RequestFacade;
 use buzzingpixel\visor\services\ChannelSelectsService;
 use buzzingpixel\visor\controllers\EntryListController;
+use buzzingpixel\visor\services\FiltersFromInputService;
+use buzzingpixel\visor\services\FilteredChannelLinksService;
 
 // Get addon json path
 $addOnPath = realpath(__DIR__);
@@ -55,9 +57,41 @@ return [
 
             if (! $service) {
                 $service = new ChannelSelectsService(ee('Model'), $session);
+
+                $session->set_cache('Visor', 'ChannelSelectsService', $service);
             }
 
             return $service;
+        },
+        'FilteredChannelLinksService' => function () {
+            /** @var \EE_Session $session */
+            $session = ee()->session;
+
+            $service = $session->cache('Visor', 'FilteredChannelLinksService');
+
+            if (! $service) {
+                $service = new FilteredChannelLinksService(
+                    ee('Model'),
+                    $session,
+                    ee('Permission'),
+                    ee('visor:FiltersFromInputService'),
+                    ee('visor:RequestService'),
+                    ee('visor:CpUrlService')
+                );
+
+                $session->set_cache(
+                    'Visor',
+                    'FilteredChannelLinksService',
+                    $service
+                );
+            }
+
+            return $service;
+        },
+        'FiltersFromInputService' => function () {
+            return new FiltersFromInputService(
+                ee('visor:RequestService')
+            );
         },
     ],
 ];
