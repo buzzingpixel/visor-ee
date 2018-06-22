@@ -6,6 +6,8 @@
  * @license unlicensed
  */
 
+use buzzingpixel\visor\facades\RequestFacade;
+
 // Get addon json path
 $addOnPath = realpath(__DIR__);
 
@@ -29,5 +31,13 @@ return [
     'settings_exist' => true,
     'version' => VISOR_VER,
     'services' => [
+        /**
+         * Services
+         */
+        'RequestService' => function () {
+            return new RequestFacade(
+                ee()->input
+            );
+        },
     ],
 ];
