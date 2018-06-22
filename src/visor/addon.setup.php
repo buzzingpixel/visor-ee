@@ -6,7 +6,9 @@
  * @license unlicensed
  */
 
+use buzzingpixel\visor\facades\ViewFacade;
 use buzzingpixel\visor\facades\RequestFacade;
+use buzzingpixel\visor\controllers\EntryListController;
 
 // Get addon json path
 $addOnPath = realpath(__DIR__);
@@ -35,9 +37,10 @@ return [
          * Services
          */
         'RequestService' => function () {
-            return new RequestFacade(
-                ee()->input
-            );
+            return new RequestFacade(ee()->input);
+        },
+        'ViewService' => function () {
+            return new ViewFacade(ee('View'));
         },
     ],
 ];
