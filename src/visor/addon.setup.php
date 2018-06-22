@@ -7,6 +7,7 @@
  */
 
 use buzzingpixel\visor\facades\ViewFacade;
+use buzzingpixel\visor\facades\CpUrlFacade;
 use buzzingpixel\visor\facades\RequestFacade;
 use buzzingpixel\visor\controllers\EntryListController;
 
@@ -41,6 +42,9 @@ return [
         },
         'ViewService' => function () {
             return new ViewFacade(ee('View'));
+        },
+        'CpUrlService' => function () {
+            return new CpUrlFacade(ee('CP/URL'));
         },
     ],
 ];
