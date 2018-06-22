@@ -9,6 +9,7 @@
 use buzzingpixel\visor\facades\ViewFacade;
 use buzzingpixel\visor\facades\CpUrlFacade;
 use buzzingpixel\visor\facades\RequestFacade;
+use buzzingpixel\visor\services\ColumnConfigService;
 use buzzingpixel\visor\services\ChannelSelectsService;
 use buzzingpixel\visor\controllers\EntryListController;
 use buzzingpixel\visor\services\FiltersFromInputService;
@@ -91,6 +92,12 @@ return [
         'FiltersFromInputService' => function () {
             return new FiltersFromInputService(
                 ee('visor:RequestService')
+            );
+        },
+        'ColumnConfigService' => function () {
+            return new ColumnConfigService(
+                ee('visor:FiltersFromInputService'),
+                ee()->config
             );
         },
     ],
