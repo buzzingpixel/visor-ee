@@ -9,6 +9,7 @@
 use buzzingpixel\visor\facades\ViewFacade;
 use buzzingpixel\visor\facades\CpUrlFacade;
 use buzzingpixel\visor\facades\RequestFacade;
+use buzzingpixel\visor\services\ChannelSelectsService;
 use buzzingpixel\visor\controllers\EntryListController;
 
 // Get addon json path
@@ -45,6 +46,18 @@ return [
         },
         'CpUrlService' => function () {
             return new CpUrlFacade(ee('CP/URL'));
+        },
+        'ChannelSelectsService' => function () {
+            /** @var \EE_Session $session */
+            $session = ee()->session;
+
+            $service = $session->cache('Visor', 'ChannelSelectsService');
+
+            if (! $service) {
+                $service = new ChannelSelectsService(ee('Model'), $session);
+            }
+
+            return $service;
         },
     ],
 ];
