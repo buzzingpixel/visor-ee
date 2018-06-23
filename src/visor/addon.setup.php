@@ -7,6 +7,7 @@
  */
 
 use buzzingpixel\visor\facades\ViewFacade;
+use buzzingpixel\visor\facades\TableFacade;
 use buzzingpixel\visor\facades\CpUrlFacade;
 use buzzingpixel\visor\facades\RequestFacade;
 use buzzingpixel\visor\services\FilterTypesService;
@@ -106,6 +107,9 @@ return [
                 ee('visor:ColumnConfigService'),
                 ee('visor:FiltersFromInputService')
             );
+        },
+        'TableService' => function () {
+            return new TableFacade();
         },
     ],
 ];
