@@ -6,6 +6,8 @@
  * @license unlicensed
  */
 
+use buzzingpixel\visor\controllers\EntryListController;
+
 use EllisLab\ExpressionEngine\Library\CP\Table;
 use EllisLab\ExpressionEngine\Service\Alert\Alert;
 use EllisLab\ExpressionEngine\Library\CP\Pagination;
@@ -136,26 +138,33 @@ class Visor_mcp
      */
     public function index()
     {
+        /** @var EntryListController $entryListController */
+        $entryListController = ee('visor:EntryListController');
+
+        return $entryListController();
+
         if (strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             $this->deletePostedEntries();
             exit();
         }
 
-        $filters = $this->inputService->get('filter', true);
+        ////////////////////////////////////////////////////////////////////////
 
-        if (! is_array($filters)) {
-            $filters = [];
-        }
+        // $filters = $this->inputService->get('filter', true);
 
-        $viewBody = '<style type="text/css">';
-        $viewBody .= file_get_contents(VISOR_PATH . '/resources/visor.css');
-        $viewBody .= '</style>';
+        // if (! is_array($filters)) {
+        //     $filters = [];
+        // }
 
-        if (version_compare(APP_VER, '4.0.0', '<')) {
-            $viewBody .= '<style type="text/css">';
-            $viewBody .= file_get_contents(VISOR_PATH . '/resources/visoree3.css');
-            $viewBody .= '</style>';
-        }
+        // $viewBody = '<style type="text/css">';
+        // $viewBody .= file_get_contents(VISOR_PATH . '/resources/visor.css');
+        // $viewBody .= '</style>';
+
+        // if (version_compare(APP_VER, '4.0.0', '<')) {
+        //     $viewBody .= '<style type="text/css">';
+        //     $viewBody .= file_get_contents(VISOR_PATH . '/resources/visoree3.css');
+        //     $viewBody .= '</style>';
+        // }
 
         $viewBody .= '<script type="text/javascript">';
         $viewBody .= file_get_contents(VISOR_PATH . '/resources/FAB.controller.js');
@@ -166,19 +175,20 @@ class Visor_mcp
 
         $viewBody .= $this->viewFactory->make('visor:Visor')
             ->render([
-                'viewFactory' => $this->viewFactory,
-                'baseUrl' => $this->cpUrlFactory->make('addons/settings/visor')->compile(),
-                'fullUrl' => $this->getFullUrlToPage(),
-                'filters' => $filters,
-                'channelSelects' => $this->getChannelSelects(),
-                'filteredChannelLinks' => $this->getFilteredChannelLinks(),
-                'pagination' => $this->getPagination(),
-                'filterTypes' => $this->getFilterTypes(),
+                // 'viewFactory' => $this->viewFactory,
+                // 'baseUrl' => $this->cpUrlFactory->make('addons/settings/visor')->compile(),
+                // 'fullUrl' => $this->getFullUrlToPage(),
+                // 'filters' => $filters,
+                // 'channelSelects' => $this->getChannelSelects(),
+                // 'filteredChannelLinks' => $this->getFilteredChannelLinks(),
+                // 'pagination' => $this->getPagination(),
+                // 'filterTypes' => $this->getFilterTypes(),
                 'tableViewData' => $this->populateTableData(
                     $this->createTable(),
                     $this->getEntryModelCollection()
                 )
-                ->viewData(),]);
+                ->viewData(),
+            ]);
 
         $controllersDirectory = new \DirectoryIterator(VISOR_PATH . '/resources/controllers');
 

@@ -10,6 +10,7 @@ use buzzingpixel\visor\facades\ViewFacade;
 use buzzingpixel\visor\facades\TableFacade;
 use buzzingpixel\visor\facades\CpUrlFacade;
 use buzzingpixel\visor\facades\RequestFacade;
+use buzzingpixel\visor\services\VisorTableService;
 use buzzingpixel\visor\services\FilterTypesService;
 use buzzingpixel\visor\services\ColumnConfigService;
 use buzzingpixel\visor\services\ChannelSelectsService;
@@ -111,5 +112,22 @@ return [
         'TableService' => function () {
             return new TableFacade();
         },
+        'VisorTableService' => function () {
+            return new VisorTableService();
+        },
+
+        /**
+         * Controllers
+         */
+        'EntryListController' => function () {
+            return new EntryListController(
+                ee('visor:RequestService'),
+                ee('visor:ViewService'),
+                ee('visor:CpUrlService'),
+                ee('visor:ChannelSelectsService'),
+                ee('visor:FilteredChannelLinksService'),
+                ee('visor:FilterTypesService')
+            );
+        }
     ],
 ];
