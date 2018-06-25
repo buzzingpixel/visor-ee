@@ -10,10 +10,13 @@ use buzzingpixel\visor\facades\ViewFacade;
 use buzzingpixel\visor\facades\TableFacade;
 use buzzingpixel\visor\facades\CpUrlFacade;
 use buzzingpixel\visor\facades\RequestFacade;
+use buzzingpixel\visor\services\FieldService;
+use \buzzingpixel\visor\factories\TableFactory;
 use buzzingpixel\visor\services\VisorTableService;
 use buzzingpixel\visor\services\FilterTypesService;
 use buzzingpixel\visor\services\ColumnConfigService;
 use buzzingpixel\visor\services\ChannelSelectsService;
+use buzzingpixel\visor\services\EntrySelectionService;
 use buzzingpixel\visor\controllers\EntryListController;
 use buzzingpixel\visor\services\FiltersFromInputService;
 use buzzingpixel\visor\services\FilteredChannelLinksService;
@@ -113,7 +116,40 @@ return [
             return new TableFacade();
         },
         'VisorTableService' => function () {
-            return new VisorTableService();
+            return new VisorTableService(
+                new TableFactory(),
+                ee('visor:ColumnConfigService'),
+                ee('visor:EntrySelectionService'),
+                ee('visor:FiltersFromInputService'),
+                ee('visor:CpUrlService'),
+                ee('visor:FieldService'),
+                ee('Model'),
+                ee('db'),
+                ee('visor:ViewService')
+            );
+        },
+        'EntrySelectionService' => function () {
+            return new EntrySelectionService(
+                ee('visor:RequestService'),
+                ee('Model'),
+                ee()->session,
+                ee('Permission'),
+                ee('visor:FiltersFromInputService')
+            );
+        },
+        'FieldService' => function () {
+            /** @var \EE_Session $session */
+            $session = ee()->session;
+
+            $service = $session->cache('Visor', 'FieldService');
+
+            if (! $service) {
+                $service = new FieldService(ee('Model'), ee('db'));
+
+                $session->set_cache('Visor', 'FieldService', $service);
+            }
+
+            return $service;
         },
 
         /**
@@ -126,7 +162,8 @@ return [
                 ee('visor:CpUrlService'),
                 ee('visor:ChannelSelectsService'),
                 ee('visor:FilteredChannelLinksService'),
-                ee('visor:FilterTypesService')
+                ee('visor:FilterTypesService'),
+                ee('visor:VisorTableService')
             );
         }
     ],

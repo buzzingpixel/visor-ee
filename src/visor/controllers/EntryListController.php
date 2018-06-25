@@ -4,10 +4,11 @@ namespace buzzingpixel\visor\controllers;
 
 use buzzingpixel\visor\interfaces\ViewInterface;
 use buzzingpixel\visor\interfaces\CpUrlInterface;
+use buzzingpixel\visor\services\VisorTableService;
 use buzzingpixel\visor\interfaces\RequestInterface;
+use buzzingpixel\visor\services\FilterTypesService;
 use buzzingpixel\visor\services\ChannelSelectsService;
 use buzzingpixel\visor\services\FilteredChannelLinksService;
-use buzzingpixel\visor\services\FilterTypesService;
 
 /**
  * Class EntryListController
@@ -34,6 +35,9 @@ class EntryListController
     /** @var FilterTypesService $filterTypesService */
     private $filterTypesService;
 
+    /** @var VisorTableService $visorTableService */
+    private $visorTableService;
+
     /** @var array $filters */
     private $filters = [];
 
@@ -45,6 +49,7 @@ class EntryListController
      * @param ChannelSelectsService $channelSelectsService
      * @param FilteredChannelLinksService $filteredChannelLinksService
      * @param FilterTypesService $filterTypesService
+     * @param VisorTableService $visorTableService
      */
     public function __construct(
         RequestInterface $requestService,
@@ -52,7 +57,8 @@ class EntryListController
         CpUrlInterface $cpUrlService,
         ChannelSelectsService $channelSelectsService,
         FilteredChannelLinksService $filteredChannelLinksService,
-        FilterTypesService $filterTypesService
+        FilterTypesService $filterTypesService,
+        VisorTableService $visorTableService
     ) {
         $this->requestService = $requestService;
         $this->viewService = $viewService;
@@ -60,6 +66,7 @@ class EntryListController
         $this->channelSelectsService = $channelSelectsService;
         $this->filteredChannelLinksService = $filteredChannelLinksService;
         $this->filterTypesService = $filterTypesService;
+        $this->visorTableService = $visorTableService;
 
         $filters = $this->requestService->get('filter', []);
 
@@ -71,11 +78,12 @@ class EntryListController
     }
 
     /**
-     * Controller invocation
+     * Displays the listing page
+     * @return array
      */
     public function __invoke()
     {
-        $this->run();
+        return $this->run();
     }
 
     /**
@@ -109,14 +117,35 @@ class EntryListController
             'filteredChannelLinks' => $this->filteredChannelLinksService->get(),
             'pagination' => null,
             'filterTypes' => $this->filterTypesService->get(),
-            'tableViewData' => '',
+            'tableViewData' => $this->visorTableService->getViewData(),
         ]);
 
-        var_dump($viewBody);
-        die;
+        $jsControllersDirectory = new \DirectoryIterator(
+            VISOR_PATH . '/resources/controllers'
+        );
 
-        var_dump($this->requestService->server('REQUEST_METHOD'));
-        die;
+        foreach ($jsControllersDirectory as $fileInfo) {
+            if ($fileInfo->isDot() ||
+                $fileInfo->isDir() ||
+                $fileInfo->getExtension() !== 'js'
+            ) {
+                continue;
+            }
+
+            $viewBody .= '<script type="text/javascript">';
+
+            $viewBody .= file_get_contents(
+                $fileInfo->getPath() . '/' . $fileInfo->getFilename()
+            );
+
+            $viewBody .= '</script>';
+        }
+
+        $viewBody .= '<script type="text/javascript">';
+        $viewBody .= file_get_contents(VISOR_PATH . '/resources/visor.js');
+        $viewBody .= '</script>';
+
+        return ['heading' => lang('Visor'), 'body' => $viewBody,];
     }
 
     /**
