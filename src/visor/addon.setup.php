@@ -164,7 +164,8 @@ return [
                 ee('visor:ChannelSelectsService'),
                 ee('visor:FilteredChannelLinksService'),
                 ee('visor:FilterTypesService'),
-                ee('visor:VisorTableService')
+                ee('visor:VisorTableService'),
+                ee('visor:EntrySelectionService')
             );
         },
         'EntryRemoveController' => function () {

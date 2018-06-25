@@ -3,7 +3,8 @@
 namespace buzzingpixel\visor\facades;
 
 use buzzingpixel\visor\interfaces\CpUrlInterface;
-use \EllisLab\ExpressionEngine\Service\URL\URLFactory as EECpUrlFactory;
+use EllisLab\ExpressionEngine\Library\CP\URL as UrlObject;
+use EllisLab\ExpressionEngine\Service\URL\URLFactory as EECpUrlFactory;
 
 /**
  * Class CpUrlFacade
@@ -30,6 +31,17 @@ class CpUrlFacade implements CpUrlInterface
      */
     public function renderUrl($path, array $query = [])
     {
-        return $this->eeCpUrlFactory->make($path, $query)->compile();
+        return $this->getUrlObject($path, $query)->compile();
+    }
+
+    /**
+     * Gets a URL object
+     * @param $path
+     * @param array $query
+     * @return UrlObject
+     */
+    public function getUrlObject($path, array $query = [])
+    {
+        return $this->eeCpUrlFactory->make($path, $query);
     }
 }

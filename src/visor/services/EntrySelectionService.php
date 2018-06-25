@@ -3,7 +3,9 @@
 namespace buzzingpixel\visor\services;
 
 use buzzingpixel\visor\interfaces\RequestInterface;
+use EllisLab\ExpressionEngine\Library\CP\Pagination;
 use buzzingpixel\visor\services\FiltersFromInputService;
+use EllisLab\ExpressionEngine\Library\CP\URL as UrlObject;
 use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
 use EllisLab\ExpressionEngine\Service\Model\Collection as ModelCollection;
 use EllisLab\ExpressionEngine\Service\Model\Query\Builder as ModelQueryBuilder;
@@ -68,6 +70,25 @@ class EntrySelectionService
         $channelModelBuilder->offset(($page * $limit) - $limit);
 
         return $channelModelBuilder->all();
+    }
+
+    /**
+     * Gets pagination
+     * @param UrlObject $fullPageUrl
+     * @return string
+     */
+    public function getPagination($fullPageUrl)
+    {
+        $limit = $this->requestService->get('limit', self::PAGE_LIMIT);
+
+        $channelModelBuilder = $this->getEntryModelBuilder();
+
+        /** @var Pagination $pagination */
+        $pagination = ee('CP/Pagination', $channelModelBuilder->count());
+        $pagination->perPage($limit);
+        $pagination->currentPage($this->requestService->get('page', 1));
+
+        return $pagination->render($fullPageUrl);
     }
 
     /**

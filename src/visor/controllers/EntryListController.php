@@ -7,7 +7,9 @@ use buzzingpixel\visor\interfaces\CpUrlInterface;
 use buzzingpixel\visor\services\VisorTableService;
 use buzzingpixel\visor\interfaces\RequestInterface;
 use buzzingpixel\visor\services\FilterTypesService;
+use buzzingpixel\visor\services\EntrySelectionService;
 use buzzingpixel\visor\services\ChannelSelectsService;
+use EllisLab\ExpressionEngine\Library\CP\URL as UrlObject;
 use buzzingpixel\visor\services\FilteredChannelLinksService;
 
 /**
@@ -15,8 +17,6 @@ use buzzingpixel\visor\services\FilteredChannelLinksService;
  */
 class EntryListController
 {
-    const PAGE_LIMIT = 25;
-
     /** @var RequestInterface $requestService */
     private $requestService;
 
@@ -38,6 +38,9 @@ class EntryListController
     /** @var VisorTableService $visorTableService */
     private $visorTableService;
 
+    /** @var EntrySelectionService $entrySelectionService */
+    private $entrySelectionService;
+
     /** @var array $filters */
     private $filters = [];
 
@@ -50,6 +53,7 @@ class EntryListController
      * @param FilteredChannelLinksService $filteredChannelLinksService
      * @param FilterTypesService $filterTypesService
      * @param VisorTableService $visorTableService
+     * @param EntrySelectionService $entrySelectionService
      */
     public function __construct(
         RequestInterface $requestService,
@@ -58,7 +62,8 @@ class EntryListController
         ChannelSelectsService $channelSelectsService,
         FilteredChannelLinksService $filteredChannelLinksService,
         FilterTypesService $filterTypesService,
-        VisorTableService $visorTableService
+        VisorTableService $visorTableService,
+        EntrySelectionService $entrySelectionService
     ) {
         $this->requestService = $requestService;
         $this->viewService = $viewService;
@@ -67,6 +72,7 @@ class EntryListController
         $this->filteredChannelLinksService = $filteredChannelLinksService;
         $this->filterTypesService = $filterTypesService;
         $this->visorTableService = $visorTableService;
+        $this->entrySelectionService = $entrySelectionService;
 
         $filters = $this->requestService->get('filter', []);
 
@@ -115,7 +121,9 @@ class EntryListController
             'filters' => $this->filters,
             'channelSelects' => $this->channelSelectsService->get(),
             'filteredChannelLinks' => $this->filteredChannelLinksService->get(),
-            'pagination' => null,
+            'pagination' => $this->entrySelectionService->getPagination(
+                $this->getFullUrlToPageObject()
+            ),
             'filterTypes' => $this->filterTypesService->get(),
             'tableViewData' => $this->visorTableService->getViewData(),
         ]);
@@ -154,7 +162,16 @@ class EntryListController
      */
     private function getFullUrlToPage()
     {
-        return $this->cpUrlService->renderUrl(
+        return $this->getFullUrlToPageObject()->compile();
+    }
+
+    /**
+     * Gets the full page URL object
+     * @return UrlObject
+     */
+    private function getFullUrlToPageObject()
+    {
+        return $this->cpUrlService->getUrlObject(
             'addons/settings/visor',
             ['filter' => array_values($this->filters)]
         );
