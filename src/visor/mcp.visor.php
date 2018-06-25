@@ -6,22 +6,32 @@
  * @license unlicensed
  */
 
+use buzzingpixel\visor\interfaces\RequestInterface;
 use buzzingpixel\visor\controllers\EntryListController;
+use buzzingpixel\visor\controllers\EntryRemoveController;
 
 /**
  * Class Visor_mcp
  */
 class Visor_mcp
 {
+    /** @var RequestInterface $requestService */
+    private $requestService;
+
     /** @var EntryListController $entryListController */
     private $entryListController;
+
+    /** @var EntryRemoveController $entryRemoveController */
+    private $entryRemoveController;
 
     /**
      * Visor_mcp constructor
      */
     public function __construct()
     {
+        $this->requestService = ee('visor:RequestService');
         $this->entryListController = ee('visor:EntryListController');
+        $this->entryRemoveController = ee('visor:EntryRemoveController');
     }
 
     /**
@@ -30,11 +40,11 @@ class Visor_mcp
      */
     public function index()
     {
-        return $this->entryListController->run();
+        if ($this->requestService->server('REQUEST_METHOD') === 'post') {
+            $this->entryRemoveController->run();
+            exit();
+        }
 
-        // if (strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
-        //     $this->deletePostedEntries();
-        //     exit();
-        // }
+        return $this->entryListController->run();
     }
 }

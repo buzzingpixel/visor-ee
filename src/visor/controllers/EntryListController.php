@@ -156,7 +156,7 @@ class EntryListController
     {
         return $this->cpUrlService->renderUrl(
             'addons/settings/visor',
-            $this->filters
+            ['filter' => array_values($this->filters)]
         );
     }
 }

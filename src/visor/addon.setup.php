@@ -19,6 +19,7 @@ use buzzingpixel\visor\services\ChannelSelectsService;
 use buzzingpixel\visor\services\EntrySelectionService;
 use buzzingpixel\visor\controllers\EntryListController;
 use buzzingpixel\visor\services\FiltersFromInputService;
+use buzzingpixel\visor\controllers\EntryRemoveController;
 use buzzingpixel\visor\services\FilteredChannelLinksService;
 
 // Get addon json path
@@ -165,6 +166,17 @@ return [
                 ee('visor:FilterTypesService'),
                 ee('visor:VisorTableService')
             );
-        }
+        },
+        'EntryRemoveController' => function () {
+            return new EntryRemoveController(
+                ee('CP/Alert'),
+                ee('visor:RequestService'),
+                ee()->functions,
+                ee('visor:CpUrlService'),
+                ee('Model'),
+                ee('Permission'),
+                ee()->session
+            );
+        },
     ],
 ];

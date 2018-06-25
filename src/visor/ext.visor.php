@@ -180,7 +180,7 @@ class Visor_ext
                             'addons/settings/visor',
                             [
                                 'filter' => [
-                                    uniqid('', false) => [
+                                    [
                                         'type' => 'channel',
                                         'operator' => 'is',
                                         'value' => $channel->getProperty(
@@ -217,7 +217,7 @@ class Visor_ext
                         'addons/settings/visor',
                         [
                             'filter' => [
-                                uniqid('', false) => [
+                                [
                                     'type' => 'channel',
                                     'operator' => 'is',
                                     'value' => $channel->getProperty(
