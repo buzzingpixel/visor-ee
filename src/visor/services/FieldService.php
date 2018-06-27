@@ -46,6 +46,21 @@ class FieldService
             0;
     }
 
+    /**
+     * Gets a field's type by name
+     * @param $fieldName
+     * @return int
+     */
+    public function getFieldTypeByName($fieldName)
+    {
+        /** @var ChannelFieldModel $field */
+        $field = $this->fields->filter('field_name', $fieldName)->first();
+
+        return $field instanceof ChannelFieldModel ?
+            $field->getProperty('field_type') :
+            null;
+    }
+
     private $gridColIdStorage = [];
 
     /**
@@ -79,6 +94,27 @@ class FieldService
         return (int) $query->col_id;
     }
 
+    /**
+     * Gets grid column names
+     * @param int $fieldId
+     * @return array
+     */
+    public function getGridColumnIds($fieldId)
+    {
+        $query = $this->queryBuilder->select('col_id')
+            ->where('field_id', $fieldId)
+            ->get('grid_columns')
+            ->result();
+
+        $ids = [];
+
+        foreach ($query as $item) {
+            $ids[] = $item->col_id;
+        }
+
+        return $ids;
+    }
+
     private $matrixColIdStorage = [];
 
     /**
@@ -106,5 +142,26 @@ class FieldService
         $this->gridColIdStorage[$storeName] = $val;
 
         return (int) $query->col_id;
+    }
+
+    /**
+     * Gets grid column names
+     * @param int $fieldId
+     * @return array
+     */
+    public function getMatrixColumnIds($fieldId)
+    {
+        $query = $this->queryBuilder->select('col_id')
+            ->where('field_id', $fieldId)
+            ->get('matrix_cols')
+            ->result();
+
+        $ids = [];
+
+        foreach ($query as $item) {
+            $ids[] = $item->col_id;
+        }
+
+        return $ids;
     }
 }

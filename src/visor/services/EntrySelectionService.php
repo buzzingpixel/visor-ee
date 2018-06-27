@@ -2,11 +2,13 @@
 
 namespace buzzingpixel\visor\services;
 
+use buzzingpixel\visor\services\FieldService;
 use buzzingpixel\visor\interfaces\RequestInterface;
 use EllisLab\ExpressionEngine\Library\CP\Pagination;
 use buzzingpixel\visor\services\FiltersFromInputService;
 use EllisLab\ExpressionEngine\Library\CP\URL as UrlObject;
 use EllisLab\ExpressionEngine\Service\Model\Facade as ModelFacade;
+use EllisLab\ExpressionEngine\Service\Database\Query as QueryBuilder;
 use EllisLab\ExpressionEngine\Service\Model\Collection as ModelCollection;
 use EllisLab\ExpressionEngine\Service\Model\Query\Builder as ModelQueryBuilder;
 use EllisLab\ExpressionEngine\Service\Permission\Permission as PermissionService;
@@ -33,6 +35,12 @@ class EntrySelectionService
     /** @var FiltersFromInputService $filtersFromInputService */
     private $filtersFromInputService;
 
+    /** @var QueryBuilder $queryBuilder */
+    private $queryBuilder;
+
+    /** @var FieldService $fieldService */
+    private $fieldService;
+
     /**
      * EntrySelectionService constructor
      * @param RequestInterface $requestService
@@ -40,19 +48,25 @@ class EntrySelectionService
      * @param \EE_Session $eeSession
      * @param PermissionService $permissionService
      * @param FiltersFromInputService $filtersFromInputService
+     * @param QueryBuilder $queryBuilder
+     * @param FieldService $fieldService
      */
     public function __construct(
         RequestInterface $requestService,
         ModelFacade $modelFacade,
         \EE_Session $eeSession,
         PermissionService $permissionService,
-        FiltersFromInputService $filtersFromInputService
+        FiltersFromInputService $filtersFromInputService,
+        QueryBuilder $queryBuilder,
+        FieldService $fieldService
     ) {
         $this->requestService = $requestService;
         $this->modelFacade = $modelFacade;
         $this->eeSession = $eeSession;
         $this->permissionService = $permissionService;
         $this->filtersFromInputService = $filtersFromInputService;
+        $this->queryBuilder = $queryBuilder;
+        $this->fieldService = $fieldService;
     }
 
     /**
@@ -97,8 +111,16 @@ class EntrySelectionService
      */
     private function getEntryModelBuilder()
     {
+        $applicableEntryIds = $this->getApplicableEntryIds();
+
         /** @var ModelQueryBuilder $channelModelBuilder */
         $channelModelBuilder = $this->modelFacade->get('ChannelEntry');
+
+        if (! $applicableEntryIds) {
+            $channelModelBuilder->filter('entry_id', 'asdf');
+
+            return $channelModelBuilder;
+        }
 
         $channelModelBuilder->filter(
             'channel_id',
@@ -133,18 +155,165 @@ class EntrySelectionService
         }
 
         foreach ($filters['standard'] as $filter) {
-            if ($filter['operator'] === 'contains') {
-                $channelModelBuilder->filter(
-                    $filter['type'],
-                    'LIKE',
-                    '%' . $filter['value'] . '%'
-                );
+            $fieldName = $filter['type'];
+            $fieldType = $this->fieldService->getFieldTypeByName($fieldName);
+
+            if ($fieldType === 'grid' || $fieldType === 'matrix') {
                 continue;
             }
 
-            $channelModelBuilder->filter($filter['type'], $filter['value']);
+            $fieldId = $this->fieldService->getFieldIdByName($fieldName);
+
+            if ($fieldId) {
+                $fieldName = "field_id_{$fieldId}";
+            }
+
+            if ($filter['operator'] === 'contains') {
+                $channelModelBuilder->filter(
+                    $fieldName,
+                    'LIKE',
+                    '%' . $filter['value'] . '%'
+                );
+
+                continue;
+            }
+
+            $channelModelBuilder->filter($fieldName, $filter['value']);
         }
 
+        $channelModelBuilder->filter('entry_id', 'IN', $applicableEntryIds);
+
         return $channelModelBuilder;
+    }
+
+    /**
+     * Gets the applicable entry IDs
+     * @return array
+     */
+    private function getApplicableEntryIds()
+    {
+        $filters = $this->filtersFromInputService->get()['standard'];
+
+        $query = $this->queryBuilder->select('CT.entry_id')
+            ->from('channel_titles as CT');
+
+        foreach ($filters as $filter) {
+            $fieldName = $filter['type'];
+            $fieldType = $this->fieldService->getFieldTypeByName($fieldName);
+            $fieldId = $this->fieldService->getFieldIdByName($fieldName);
+            $op = $filter['operator'];
+
+            if (! $fieldType) {
+                continue;
+            }
+
+            if ($fieldType === 'grid') {
+                $query->join(
+                    "channel_grid_field_{$fieldId} as {$fieldName}",
+                    "CT.entry_id = {$fieldName}.entry_id"
+                );
+
+                $gridFieldIds = $this->fieldService->getGridColumnIds($fieldId);
+
+                if ($op === 'contains') {
+                    $likeSet = false;
+
+                    foreach ($gridFieldIds as $id) {
+                        if (! $likeSet) {
+                            $query->like(
+                                "{$fieldName}.col_id_{$id}",
+                                $filter['value']
+                            );
+
+                            $likeSet = true;
+
+                            continue;
+                        }
+
+                        $query->or_like(
+                            "{$fieldName}.col_id_{$id}",
+                            $filter['value']
+                        );
+                    }
+
+                    continue;
+                }
+
+                $query->start_group();
+
+                foreach ($gridFieldIds as $id) {
+                    $query->where(
+                        "{$fieldName}.col_id_{$id}",
+                        $filter['value']
+                    );
+                }
+
+                $query->end_group();
+
+                continue;
+            }
+
+            if ($fieldType === 'matrix') {
+                $query->join(
+                    "matrix_data as {$fieldName}",
+                    "CT.entry_id = {$fieldName}.entry_id"
+                );
+
+                $matrixFieldIds = $this->fieldService->getMatrixColumnIds($fieldId);
+
+                if ($op === 'contains') {
+                    $likeSet = false;
+
+                    foreach ($matrixFieldIds as $id) {
+                        if (! $likeSet) {
+                            $query->like(
+                                "{$fieldName}.col_id_{$id}",
+                                $filter['value']
+                            );
+
+                            $likeSet = true;
+
+                            continue;
+                        }
+
+                        $query->or_like(
+                            "{$fieldName}.col_id_{$id}",
+                            $filter['value']
+                        );
+                    }
+
+                    continue;
+                }
+
+                $query->start_group();
+
+                foreach ($matrixFieldIds as $id) {
+                    $query->where(
+                        "{$fieldName}.col_id_{$id}",
+                        $filter['value']
+                    );
+                }
+
+                $query->end_group();
+
+                continue;
+            }
+
+            // if ($op === 'contains') {
+            //     $query->like("CD.field_id_{$fieldId}", $filter['value']);
+            //
+            //     continue;
+            // }
+            //
+            // $query->where("CD.field_id_{$fieldId}", $filter['value']);
+        }
+
+        $entryIds = [];
+
+        foreach ($query->get()->result() as $item) {
+            $entryIds[] = $item->entry_id;
+        }
+
+        return $entryIds;
     }
 }

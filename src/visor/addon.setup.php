@@ -135,7 +135,9 @@ return [
                 ee('Model'),
                 ee()->session,
                 ee('Permission'),
-                ee('visor:FiltersFromInputService')
+                ee('visor:FiltersFromInputService'),
+                ee('db'),
+                ee('visor:FieldService')
             );
         },
         'FieldService' => function () {
