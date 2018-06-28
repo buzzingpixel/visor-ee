@@ -156,6 +156,12 @@ class EntrySelectionService
 
         foreach ($filters['standard'] as $filter) {
             $fieldName = $filter['type'];
+
+            if (strpos($fieldName, '.') !== false) {
+                $fieldArr = explode('.', $fieldName);
+                $fieldName = $fieldArr[0];
+            }
+
             $fieldType = $this->fieldService->getFieldTypeByName($fieldName);
 
             if ($fieldType === 'grid' || $fieldType === 'matrix') {
@@ -199,6 +205,15 @@ class EntrySelectionService
 
         foreach ($filters as $filter) {
             $fieldName = $filter['type'];
+            $subFieldName = null;
+
+            if (strpos($fieldName, '.') !== false) {
+                $fieldArr = explode('.', $fieldName);
+                $fieldName = $fieldArr[0];
+                $subFieldName = $fieldArr[1];
+            }
+
+
             $fieldType = $this->fieldService->getFieldTypeByName($fieldName);
             $fieldId = $this->fieldService->getFieldIdByName($fieldName);
             $op = $filter['operator'];
@@ -208,93 +223,102 @@ class EntrySelectionService
             }
 
             if ($fieldType === 'grid') {
+                if (! $subFieldName) {
+                    continue;
+                }
+
                 $query->join(
-                    "channel_grid_field_{$fieldId} as {$fieldName}",
-                    "CT.entry_id = {$fieldName}.entry_id"
+                    "channel_grid_field_{$fieldId} as {$fieldName}_{$subFieldName}",
+                    "CT.entry_id = {$fieldName}_{$subFieldName}.entry_id",
+                    'LEFT'
                 );
 
-                $gridFieldIds = $this->fieldService->getGridColumnIds($fieldId);
+                $gridColId = $this->fieldService->getGridColId(
+                    $fieldId,
+                    $subFieldName
+                );
 
-                if ($op === 'contains') {
-                    $likeSet = false;
+                if (empty($filter['value'])) {
+                    $query->start_group();
 
-                    foreach ($gridFieldIds as $id) {
-                        if (! $likeSet) {
-                            $query->like(
-                                "{$fieldName}.col_id_{$id}",
-                                $filter['value']
-                            );
+                    $query->where(
+                        "{$fieldName}_{$subFieldName}.col_id_{$gridColId}",
+                        ''
+                    );
 
-                            $likeSet = true;
+                    $query->or_where(
+                        "{$fieldName}_{$subFieldName}.col_id_{$gridColId}",
+                        null
+                    );
 
-                            continue;
-                        }
-
-                        $query->or_like(
-                            "{$fieldName}.col_id_{$id}",
-                            $filter['value']
-                        );
-                    }
+                    $query->end_group();
 
                     continue;
                 }
 
-                $query->start_group();
-
-                foreach ($gridFieldIds as $id) {
-                    $query->where(
-                        "{$fieldName}.col_id_{$id}",
+                if ($op === 'contains') {
+                    $query->like(
+                        "{$fieldName}_{$subFieldName}.col_id_{$gridColId}",
                         $filter['value']
                     );
+
+                    continue;
                 }
 
-                $query->end_group();
+                $query->where(
+                    "{$fieldName}_{$subFieldName}.col_id_{$gridColId}",
+                    $filter['value']
+                );
 
                 continue;
             }
 
             if ($fieldType === 'matrix') {
+                if (! $subFieldName) {
+                    continue;
+                }
+
                 $query->join(
-                    "matrix_data as {$fieldName}",
-                    "CT.entry_id = {$fieldName}.entry_id"
+                    "matrix_data as {$fieldName}_{$subFieldName}",
+                    "CT.entry_id = {$fieldName}_{$subFieldName}.entry_id"
                 );
 
-                $matrixFieldIds = $this->fieldService->getMatrixColumnIds($fieldId);
+                $matrixColId = $this->fieldService->getMatrixColId(
+                    $fieldId,
+                    $subFieldName
+                );
 
-                if ($op === 'contains') {
-                    $likeSet = false;
+                if (empty($filter['value'])) {
+                    $query->start_group();
 
-                    foreach ($matrixFieldIds as $id) {
-                        if (! $likeSet) {
-                            $query->like(
-                                "{$fieldName}.col_id_{$id}",
-                                $filter['value']
-                            );
+                    $query->where(
+                        "{$fieldName}_{$subFieldName}.col_id_{$matrixColId}",
+                        ''
+                    );
 
-                            $likeSet = true;
+                    $query->or_where(
+                        "{$fieldName}_{$subFieldName}.col_id_{$matrixColId}",
+                        null
+                    );
 
-                            continue;
-                        }
-
-                        $query->or_like(
-                            "{$fieldName}.col_id_{$id}",
-                            $filter['value']
-                        );
-                    }
+                    $query->end_group();
 
                     continue;
                 }
 
-                $query->start_group();
-
-                foreach ($matrixFieldIds as $id) {
-                    $query->where(
-                        "{$fieldName}.col_id_{$id}",
+                if ($op === 'contains') {
+                    $query->like(
+                        "{$fieldName}_{$subFieldName}.col_id_{$matrixColId}",
                         $filter['value']
                     );
+
+                    continue;
                 }
 
-                $query->end_group();
+                $query->where(
+                    "{$fieldName}_{$subFieldName}.col_id_{$matrixColId}",
+                    $filter['value']
+                );
 
                 continue;
             }
