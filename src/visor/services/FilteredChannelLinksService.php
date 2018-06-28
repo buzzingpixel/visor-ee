@@ -89,7 +89,12 @@ class FilteredChannelLinksService
      */
     private function getLinks()
     {
-        if (! $this->permissionService->has('can_create_entries')) {
+        $assignedChannels = $this->eeSession->userdata('assigned_channels');
+
+
+        if (! $assignedChannels ||
+            ! $this->permissionService->has('can_create_entries')
+        ) {
             return [];
         }
 
@@ -103,7 +108,7 @@ class FilteredChannelLinksService
         $channelQuery->filter(
             'channel_id',
             'IN',
-            array_keys($this->eeSession->userdata('assigned_channels'))
+            array_keys($assignedChannels)
         );
 
         if ($filters['channels']) {

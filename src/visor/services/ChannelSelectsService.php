@@ -61,13 +61,19 @@ class ChannelSelectsService
      */
     private function getSelects()
     {
+        $assignedChannels = $this->eeSession->userdata('assigned_channels');
+
+        if (! $assignedChannels) {
+            return [];
+        }
+
         /** @var ModelQueryBuilder $channelQuery */
         $channelQuery = $this->modelFacade->get('Channel');
 
         $channelQuery->filter(
             'channel_id',
             'IN',
-            array_keys($this->eeSession->userdata('assigned_channels'))
+            array_keys($assignedChannels)
         );
 
         $channelQuery->order('channel_title', 'asc');
