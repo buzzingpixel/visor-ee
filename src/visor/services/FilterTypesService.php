@@ -78,6 +78,61 @@ class FilterTypesService
         $filtersSet = [];
 
         foreach ($config as $configItem) {
+            $subItems = isset($configItem['gridItems']) ?
+                $configItem['gridItems'] :
+                null;
+
+            if (! $subItems) {
+                $subItems = isset($configItem['matrixItems']) ?
+                    $configItem['matrixItems'] :
+                    null;
+            }
+
+            if ($subItems !== null) {
+                $appropriateTopLevelItemsSet = is_array($subItems) && isset(
+                    $configItem['label'],
+                    $configItem['modelProperty']
+                );
+
+                if (! $appropriateTopLevelItemsSet) {
+                    continue;
+                }
+
+                $subSet = [];
+
+                foreach ($subItems as $item) {
+                    $appropriateItemsSet = isset(
+                        $item['label'],
+                        $item['modelProperty'],
+                        $item['filter']
+                    );
+
+                    if (! $appropriateItemsSet || ! $item['filter']) {
+                        continue;
+                    }
+
+                    $val = "{$configItem['modelProperty']}.{$item['modelProperty']}";
+
+                    $subSet[] = [
+                        'label' => $item['label'],
+                        'value' => $val
+                    ];
+
+                    $filtersSet[$val] = $val;
+                }
+
+                if (! $subSet) {
+                    continue;
+                }
+
+                $filterTypes[] = [
+                    'label' => lang($configItem['label']),
+                    'subSet' => $subSet,
+                ];
+
+                continue;
+            }
+
             $appropriateItemsSet = isset(
                 $configItem['filter'],
                 $configItem['label'],
@@ -113,7 +168,7 @@ class FilterTypesService
             $filterTypes[] = [
                 'label' => lang($inputFilter['type']),
                 'value' => $inputFilter['type'],
-            ];
+             ];
         }
 
         return $filterTypes;

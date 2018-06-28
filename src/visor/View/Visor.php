@@ -54,14 +54,29 @@ $isEE3 = version_compare(APP_VER, '4.0.0', '<');
                                 <div class="filters__item-wrapper">
                                     <select name="filter[<?=$key?>][type]" class="JSFilterType">
                                         <?php foreach ($filterTypes as $filterType) : ?>
-                                            <option
-                                                value="<?=$filterType['value']?>"
-                                                <?php if ($filter['type'] === $filterType['value']) : ?>
-                                                selected
-                                                <?php endif ?>
-                                            >
-                                                <?=$filterType['label']?>
-                                            </option>
+                                            <?php if (isset($filterType['subSet'])) : ?>
+                                                <optgroup label="<?=$filterType['label']?>">
+                                                    <?php foreach ($filterType['subSet'] as $subFilter) : ?>
+                                                        <option
+                                                            value="<?=$subFilter['value']?>"
+                                                            <?php if ($filter['type'] === $subFilter['value']) : ?>
+                                                            selected
+                                                            <?php endif ?>
+                                                        >
+                                                            <?=$subFilter['label']?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </optgroup>
+                                            <?php else : ?>
+                                                <option
+                                                    value="<?=$filterType['value']?>"
+                                                    <?php if ($filter['type'] === $filterType['value']) : ?>
+                                                    selected
+                                                    <?php endif; ?>
+                                                >
+                                                    <?=$filterType['label']?>
+                                                </option>
+                                            <?php endif; ?>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
@@ -171,9 +186,21 @@ $isEE3 = version_compare(APP_VER, '4.0.0', '<');
             <div class="filters__item-wrapper">
                 <select name="filter[{{filterKey}}][type]" class="JSFilterType">
                     <?php foreach ($filterTypes as $filterType) : ?>
-                        <option value="<?=$filterType['value']?>">
-                            <?=$filterType['label']?>
-                        </option>
+                        <?php if (isset($filterType['subSet'])) : ?>
+                        <optgroup label="<?=$filterType['label']?>">
+                            <?php foreach ($filterType['subSet'] as $subFilter) : ?>
+                                <option
+                                    value="<?=$subFilter['value']?>"
+                                >
+                                    <?=$subFilter['label']?>
+                                </option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                        <?php else : ?>
+                            <option value="<?=$filterType['value']?>">
+                                <?=$filterType['label']?>
+                            </option>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 </select>
             </div>
