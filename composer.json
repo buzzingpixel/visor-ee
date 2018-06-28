@@ -1,6 +1,6 @@
 {
     "name": "buzzingpixel/visor-ee",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "description": "Custom entries view",
     "type": "ee-add-on",
     "authors": [

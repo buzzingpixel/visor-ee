@@ -201,7 +201,8 @@ class EntrySelectionService
         $filters = $this->filtersFromInputService->get()['standard'];
 
         $query = $this->queryBuilder->select('CT.entry_id')
-            ->from('channel_titles as CT');
+            ->from('channel_titles as CT')
+            ->group_by('CT.entry_id');
 
         foreach ($filters as $filter) {
             $fieldName = $filter['type'];
@@ -229,7 +230,7 @@ class EntrySelectionService
 
                 $query->join(
                     "channel_grid_field_{$fieldId} as {$fieldName}_{$subFieldName}",
-                    "CT.entry_id = {$fieldName}_{$subFieldName}.entry_id",
+                    "CT.entry_id = {$fieldName}_{$subFieldName}.entry_id AND {$fieldName}_{$subFieldName}.field_id = $fieldId",
                     'LEFT'
                 );
 
@@ -280,7 +281,8 @@ class EntrySelectionService
 
                 $query->join(
                     "matrix_data as {$fieldName}_{$subFieldName}",
-                    "CT.entry_id = {$fieldName}_{$subFieldName}.entry_id"
+                    "CT.entry_id = {$fieldName}_{$subFieldName}.entry_id AND {$fieldName}_{$subFieldName}.field_id = $fieldId",
+                    'LEFT'
                 );
 
                 $matrixColId = $this->fieldService->getMatrixColId(

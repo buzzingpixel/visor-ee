@@ -33,7 +33,7 @@ if (file_exists($vendorAutoloadFile)) {
     require $vendorAutoloadFile;
 }
 
-defined('VISOR_VER') || define('VISOR_VER', '0.0.7');
+defined('VISOR_VER') || define('VISOR_VER', '0.0.8');
 defined('VISOR_PATH') || define('VISOR_PATH', $addOnPath);
 
 return [
